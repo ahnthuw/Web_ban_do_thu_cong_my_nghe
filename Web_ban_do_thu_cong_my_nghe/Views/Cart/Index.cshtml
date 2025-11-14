@@ -1,0 +1,157 @@
+﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.ViewModels.CartItem>
+@using System.Linq
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    var hasItems = Model.Any();
+    var subtotal = ViewBag.CartSubtotal is decimal sub ? sub : 0m;
+    var shippingFee = ViewBag.ShippingFee is decimal ship ? ship : 0m;
+    var discountAmount = ViewBag.DiscountAmount is decimal discount ? discount : 0m;
+    var total = ViewBag.CartTotal is decimal totalValue ? totalValue : subtotal + shippingFee - discountAmount;
+    var appliedCoupon = ViewBag.CouponCode as string ?? string.Empty;
+    var couponDescription = ViewBag.CouponDescription as string ?? string.Empty;
+    var couponMessage = ViewBag.CouponMessage as string;
+}
+
+<!-- Single Page Header start -->
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Cart Page</h1>
+    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Pages</a></li>
+        <li class="breadcrumb-item active text-white">Cart Page</li>
+    </ol>
+</div>
+<!-- Single Page Header End -->
+<!-- Cart Page Start -->
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        @if (hasItems)
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Tên sản phẩm</th>
+                            <th scope="col">Loại</th>
+                            <th scope="col">Giá</th>
+                            <th scope="col">Số lượng</th>
+                            <th scope="col">Thành tiền</th>
+                            <th scope="col">Xử lý</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <th scope="row">
+                                    <p class="mb-0 py-4">
+                                        <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
+                                            @item.TenHH
+                                        </a>
+                                    </p>
+                                </th>
+                                <td>
+                                    <p class="mb-0 py-4">@item.MaHh</p>
+                                </td>
+                                <td>
+                                    <p class="mb-0 py-4">@item.DonGia.ToString("N0")</p>
+                                </td>
+                                <td>
+                                    <div class="input-group quantity py-4" style="width: 100px;">
+                                        <div class="input-group-btn">
+                                            <button class="btn btn-sm btn-minus rounded-circle bg-light border">
+                                                <i class="fa fa-minus"></i>
+                                            </button>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm text-center border-0" value="@item.SoLuong">
+                                        <div class="input-group-btn">
+                                            <button class="btn btn-sm btn-plus rounded-circle bg-light border">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="mb-0 py-4">@item.ThanhTien.ToString("N0")</p>
+                                </td>
+                                <td class="py-4">
+                                    <a asp-action="RemoveCart" asp-controller="Cart" asp-route-id="@item.MaHh" class="btn btn-md rounded-circle bg-light border">
+                                        <i class="fa fa-times text-danger"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">Giỏ hàng của bạn đang trống. Hãy tiếp tục mua sắm để thêm sản phẩm!</div>
+        }
+        
+        @if (!string.IsNullOrEmpty(couponMessage))
+        {
+            <div class="alert alert-warning mt-4">@couponMessage</div>
+        }
+
+        <div class="mt-5 d-flex flex-wrap gap-3 align-items-center">
+            <form asp-action="ApplyCoupon" method="post" class="d-flex flex-wrap gap-3 align-items-center">
+                @Html.AntiForgeryToken()
+                <input type="text" name="couponCode" value="@appliedCoupon" class="border-0 border-bottom rounded-pill py-3 px-4" placeholder="Nhập mã giảm giá" @(hasItems ? null : "disabled")>
+                <button class="btn btn-primary rounded-pill py-3 px-4" type="submit" @(hasItems ? null : "disabled")>Áp dụng phiếu giảm giá</button>
+            </form>
+            @if (!string.IsNullOrEmpty(appliedCoupon))
+            {
+                <form asp-action="RemoveCoupon" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-secondary rounded-pill py-3 px-4" type="submit">Hủy mã</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-end">
+        <div class="col-8"></div>
+        <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
+            <div class="bg-light rounded">
+                <div class="p-4">
+                    <h1 class="display-6 mb-4">Tổng tiền <span class="fw-normal">giỏ hàng</span></h1>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="mb-0 me-2">Tổng phụ:</h5>
+                        <p class="mb-0"><b>@subtotal.ToString("N0")</b></p>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="mb-0 me-2">Vận chuyển:</h5>
+                        <p class="mb-0"><b>@shippingFee.ToString("N0")</b></p>
+                    </div>
+
+                    @if (discountAmount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-3 text-success">
+                            <h5 class="mb-0 me-2">Giảm giá:</h5>
+                            <p class="mb-0">-@discountAmount.ToString("N0")</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(couponDescription))
+                        {
+                            <p class="mb-3 text-success">@couponDescription</p>
+                        }
+                    }
+
+                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                        <h5 class="mb-0 ps-4 me-2">Tổng cộng:</h5>
+                        <p class="mb-0 pe-4"><b>@total.ToString("N0")</b></p>
+                    </div>
+
+                    <a class="btn border-secondary rounded-pill px-4 py-3 text-uppercase mb-4 ms-4" asp-action="Checkout" asp-controller="Cart">
+                        Thanh toán
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Cart Page End -->
+

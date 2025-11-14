@@ -1,0 +1,25 @@
+﻿@model IEnumerable< Web_ban_do_thu_cong_my_nghe.ViewModels.MenuLoaiVM>
+
+<div class="col-lg-3 wow fadeInUp" data-wow-delay="0.1s">
+    <div class="product-categories mb-4">
+        <h4>Danh Mục</h4>
+        <ul class="list-unstyled">
+            @foreach (var item in Model)
+            {
+
+                <li>
+                    <div class="categories-item">
+                        <a asp-controller="HangHoa" asp-action="Index" asp-route-loai="@item.Id">
+
+							<i class="fas fa-apple-alt text-secondary me-2"></i>@item.Name
+                        
+                    </a>
+                    <span>(@item.ProductCount)</span>
+                    
+                </div>
+            </li>
+            }
+            
+        </ul>
+    </div>
+   </div>

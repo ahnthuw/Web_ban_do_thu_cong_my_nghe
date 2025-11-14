@@ -1,0 +1,119 @@
+@model IEnumerable<Web_ban_do_thu_cong_my_nghe.ViewModels.HangHoaVM>
+@{
+    ViewData["Title"] = "Sản phẩm bán chạy";
+}
+
+<div class="container-fluid page-header py-5 d-flex flex-column justify-content-center align-items-center" style="min-height: 300px;">
+    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Sản phẩm bán chạy</h1>
+    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
+        <li class="breadcrumb-item"><a asp-controller="HangHoa" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item active text-white">Bán chạy</li>
+    </ol>
+</div>
+
+<div class="container-fluid shop py-5">
+    <div class="container py-5">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">Hiện chưa có dữ liệu đơn hàng để thống kê sản phẩm bán chạy.</div>
+        }
+        else
+        {
+            <div class="row g-4 product">
+                @{ 
+                    Func<string, string> resolveImage = imagePath =>
+                    {
+                        if (string.IsNullOrWhiteSpace(imagePath))
+                        {
+                            return Url.Content("~/img/product-1.png");
+                        }
+
+                        if (imagePath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return imagePath;
+                        }
+
+                        if (imagePath.StartsWith("~/"))
+                        {
+                            return Url.Content(imagePath);
+                        }
+
+                        return Url.Content($"~/hinh/{imagePath}");
+                    };
+                }
+                @foreach (var item in Model)
+                {
+                    <div class="col-lg-4">
+                        <div class="product-item rounded wow fadeInUp" data-wow-delay="0.1s">
+                            <div class="product-item-inner border rounded position-relative">
+                                @if (item.GiamGiaPhanTram > 0)
+                                {
+                                    <span class="badge bg-danger position-absolute top-0 start-0 m-2">Giảm @item.GiamGiaPhanTram%</span>
+                                }
+                                <div class="product-item-inner-item">
+                                    <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
+                                        <img src="@(resolveImage(item.Hinh))" class="img-fluid w-100 rounded-top" alt="@item.TenHH">
+                                    </a>
+                                    <div class="product-details">
+                                        <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
+                                            <i class="fa fa-eye fa-1x"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="text-center rounded-bottom p-4">
+                                    <span class="badge bg-secondary mb-2">Đã bán: @item.SoLuongBan</span>
+                                    <a href="#" class="d-block mb-2">@item.TenLoai</a>
+                                    <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh" class="d-block h4">
+                                        @item.TenHH
+                                    </a>
+                                    <div class="d-flex justify-content-center align-items-baseline gap-2">
+                                        @if (item.GiamGiaPhanTram > 0)
+                                        {
+                                            <span class="text-muted text-decoration-line-through">@item.DonGia.ToString("N0") đ</span>
+                                            <span class="fs-5 text-primary fw-bold">@item.GiaSauGiam.ToString("N0") đ</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="fs-5 text-primary fw-bold">@item.DonGia.ToString("N0") đ</span>
+                                        }
+                                    </div>
+                                    @if (item.GiamGiaPhanTram > 0)
+                                    {
+                                        <p class="text-uppercase text-danger fw-bold mb-0">Get up to @item.GiamGiaPhanTram% Off</p>
+                                    }
+                                </div>
+                            </div>
+                            <div class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
+                                <a asp-action="AddToCart" asp-controller="Cart" asp-route-id="@item.MaHh"
+                                   class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4">
+                                    <i class="fas fa-shopping-cart me-2"></i> Thêm vào giỏ hàng
+                                </a>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex">
+                                        <i class="fas fa-star text-primary"></i>
+                                        <i class="fas fa-star text-primary"></i>
+                                        <i class="fas fa-star text-primary"></i>
+                                        <i class="fas fa-star text-primary"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="d-flex">
+                                        <a href="#" class="text-primary d-flex align-items-center justify-content-center me-3">
+                                            <span class="rounded-circle btn-sm-square border">
+                                                <i class="fas fa-random"></i>
+                                            </span>
+                                        </a>
+                                        <a href="#" class="text-primary d-flex align-items-center justify-content-center me-0">
+                                            <span class="rounded-circle btn-sm-square border">
+                                                <i class="fas fa-heart"></i>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,51 @@
+﻿@model Web_ban_do_thu_cong_my_nghe.ViewModels.LoginVM
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="container-fluid bg-light overflow-hidden py-5">
+    <div class="container py-5">
+        <h1 class="mb-4 wow fadeInUp" data-wow-delay="0.1s">Đăng Nhập</h1>
+
+        
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="DangNhap" asp-route-returnurl="@ViewBag.ReturnUrl" method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <div class="row">
+                <div class="col-md-12 col-lg-6">
+                    <div class="form-item w-100">
+                        <label asp-for="TenDangNhap" class="form-label my-3">Tên đăng nhập</label><sup>*</sup>
+                        <input asp-for="TenDangNhap" class="form-control" />
+                        <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-12 col-lg-6">
+                    <div class="form-item w-100">
+                        <label asp-for="Password" class="form-label my-3"></label><sup>*</sup>
+                        <input asp-for="Password" class="form-control" type="password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-4 text-center align-items-center justify-content-center pt-4">
+                    <button type="submit" class="btn btn-primary border-secondary py-3 px-4 text-uppercase w-100 text-primary">
+                        Đăng Nhập
+                    </button>
+                    <a asp-controller="KhachHang" asp-action="QuenMatKhau" class="btn border-danger">
+                        Quên mật khẩu
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+

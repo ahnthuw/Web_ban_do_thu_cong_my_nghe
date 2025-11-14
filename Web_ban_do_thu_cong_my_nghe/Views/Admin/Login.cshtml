@@ -1,0 +1,31 @@
+﻿@model Web_ban_do_thu_cong_my_nghe.ViewModels.LoginVM
+
+<div class="container mt-5" style="max-width: 450px;">
+    <h2 class="mb-4 text-center">Đăng nhập Admin</h2>
+
+    
+    <form asp-action="Login" asp-controller="Admin" method="post">
+        <div class="form-group mb-3">
+            <label for="TenDangNhap">Tên đăng nhập</label>
+            <input asp-for="TenDangNhap" class="form-control" />
+            <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="Password">Mật khẩu</label>
+            <input asp-for="Password" type="password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+     
+        @if (!ViewData.ModelState.IsValid)
+        {
+            foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p class="text-danger">@error.ErrorMessage</p>
+            }
+        }
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">Đăng nhập</button>
+    </form>
+</div>

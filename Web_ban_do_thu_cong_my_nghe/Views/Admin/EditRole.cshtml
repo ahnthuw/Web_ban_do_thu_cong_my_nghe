@@ -1,0 +1,41 @@
+﻿@model Web_ban_do_thu_cong_my_nghe.Data.User
+@{
+    ViewData["Title"] = "Phân quyền";
+}
+
+<h2>Phân quyền cho: @Model.Fullname</h2>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="EditRole" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-group mb-3">
+                <label class="control-label">Tên đăng nhập</label>
+                <input asp-for="TenDangNhap" class="form-control" readonly />
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Họ tên</label>
+                <input asp-for="Fullname" class="form-control" readonly />
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Role" class="control-label">Vai trò</label>
+                <select asp-for="Role" name="Role" class="form-select">
+                    <option value="Customer">Customer</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Lưu thay đổi" class="btn btn-success" />
+                <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>

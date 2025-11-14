@@ -1,0 +1,219 @@
+﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.ViewModels.CartItem>
+@using System
+@using System.Globalization
+@using System.Linq
+@{
+    ViewData["Title"] = "Checkout";
+    var shippingOptions = ViewBag.ShippingOptions as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var paymentOptions = ViewBag.PaymentOptions as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var selectedShipping = ViewBag.SelectedShipping as string ?? string.Empty;
+    var selectedPayment = ViewBag.SelectedPayment as string ?? string.Empty;
+    var shippingFee = ViewBag.ShippingFee is decimal fee ? fee : 0m;
+    var subtotal = Model.Any() ? Model.Sum(p => p.ThanhTien) : 0m;
+    var total = subtotal + shippingFee;
+}
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<!-- Single Page Header start -->
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Checkout</h1>
+    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Cart" asp-action="Index">Giỏ hàng</a></li>
+        <li class="breadcrumb-item active text-white">Thanh toán</li>
+    </ol>
+</div>
+<!-- Single Page Header End -->
+<!-- Checkout Page Start -->
+<div class="container-fluid bg-light overflow-hidden py-5">
+    <div class="container py-5">
+        <h1 class="mb-4 wow fadeInUp" data-wow-delay="0.1s">Chi tiết hóa đơn</h1>
+        @if (ViewBag.EmptyMessage != null)
+        {
+            <div class="alert alert-warning" role="alert">
+                @ViewBag.EmptyMessage
+            </div>
+        }
+
+        <form asp-action="Checkout" asp-controller="Cart" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="PhiVanChuyen" name="PhiVanChuyen" value="@shippingFee.ToString(CultureInfo.InvariantCulture)" />
+            <div class="row g-5">
+                <div class="col-md-12 col-lg-6 col-xl-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="form-check form-switch mb-4">
+                        <input type="hidden" name="GiongKhachHang" value="false" />
+                        <input class="form-check-input" type="checkbox" role="switch" id="GiongKhachHang" name="GiongKhachHang" value="true">
+                        <label class="form-check-label" for="GiongKhachHang">Sử dụng thông tin mặc định của tôi</label>
+                    </div>
+
+                    <div class="form-item delivery-info">
+                        <label class="form-label my-3" for="HoTen">Người nhận hàng<sup>*</sup></label>
+                        <input type="text" id="HoTen" name="HoTen" class="form-control" placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="form-item delivery-info">
+                        <label class="form-label my-3" for="DiaChi">Địa chỉ nhận hàng<sup>*</sup></label>
+                        <input type="text" id="DiaChi" name="DiaChi" class="form-control" placeholder="123 Nguyễn Trãi, Hà Nội">
+                    </div>
+                    <div class="form-item delivery-info">
+                        <label class="form-label my-3" for="SoDienThoai">Điện thoại<sup>*</sup></label>
+                        <input type="text" id="SoDienThoai" name="SoDienThoai" class="form-control" placeholder="0900 000 000">
+                    </div>
+
+                    <hr>
+
+                    <div class="form-item">
+                        <label class="form-label my-3" for="Ghichu">Ghi chú</label>
+                        <textarea id="Ghichu" name="Ghichu" class="form-control" spellcheck="false" cols="30" rows="6" placeholder="Yêu cầu thêm cho đơn hàng"></textarea>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5 class="mb-3">Phương thức thanh toán</h5>
+                        @foreach (var option in paymentOptions)
+                        {
+                            string key = option.Key;
+                            string label = option.Label;
+                            var inputId = $"payment-{key}";
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="PhuongThucThanhToan" id="@inputId" value="@key" @(selectedPayment.Equals(key, StringComparison.OrdinalIgnoreCase) ? "checked" : null)>
+                                <label class="form-check-label" for="@inputId">@label</label>
+                            </div>
+                        }
+                        @if (!paymentOptions.Any())
+                        {
+                            <div class="alert alert-info">Hiện chưa có phương thức thanh toán khả dụng.</div>
+                        }
+                    </div>
+
+                    <div class="row g-4 text-center align-items-center justify-content-center pt-4">
+                        <button type="submit" class="btn btn-primary border-secondary py-3 px-4 text-uppercase w-100 text-primary" @(Model.Any() ? null : "disabled")>
+                            Đặt hàng
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-12 col-lg-6 col-xl-6 wow fadeInUp" data-wow-delay="0.3s">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr class="text-center">
+                                    <th scope="col" class="text-start">Tên sản phẩm</th>
+                                    <th scope="col">Mã sản phẩm</th>
+                                    <th scope="col">Đơn giá</th>
+                                    <th scope="col">Số lượng</th>
+                                    <th scope="col">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Any())
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        <tr class="text-center">
+                                            <th scope="row" class="text-start py-4">@item.TenHH</th>
+                                            <td class="py-4">@item.MaHh</td>
+                                            <td class="py-4">@item.DonGia.ToString("N0")</td>
+                                            <td class="py-4 text-center">@item.SoLuong</td>
+                                            <td class="py-4">@item.ThanhTien.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">Giỏ hàng hiện đang trống.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-white rounded p-4 mt-4 shadow-sm">
+                        <h5 class="mb-4">Vận chuyển</h5>
+                        @foreach (var option in shippingOptions)
+                        {
+                            string key = option.Key;
+                            string label = option.Label;
+                            decimal fee = option.Fee;
+                            var inputId = $"shipping-{key}";
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="PhuongThucVanChuyen" id="@inputId" value="@key" data-fee="@fee.ToString(CultureInfo.InvariantCulture)" @(selectedShipping.Equals(key, StringComparison.OrdinalIgnoreCase) ? "checked" : null)>
+                                <label class="form-check-label" for="@inputId">@label (@fee.ToString("N0") đ)</label>
+                            </div>
+                        }
+                        @if (!shippingOptions.Any())
+                        {
+                            <div class="alert alert-info">Hiện chưa có phương thức vận chuyển khả dụng.</div>
+                        }
+                    </div>
+
+                    <div class="bg-white rounded p-4 mt-4 shadow-sm">
+                        <h5 class="mb-4">Tổng kết đơn hàng</h5>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>Tạm tính</span>
+                            <strong id="SubtotalDisplay">@subtotal.ToString("N0") đ</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>Phí vận chuyển</span>
+                            <strong id="ShippingFeeDisplay">@shippingFee.ToString("N0") đ</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span>Tổng cộng</span>
+                            <strong id="OrderTotalDisplay">@total.ToString("N0") đ</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Checkout Page End -->
+
+@section Scripts
+{
+    <script>
+        (function () {
+            const deliveryToggle = document.getElementById('GiongKhachHang');
+            const deliveryFields = document.querySelectorAll('.delivery-info');
+            const shippingRadios = document.querySelectorAll('input[name="PhuongThucVanChuyen"]');
+            const hiddenShippingFee = document.getElementById('PhiVanChuyen');
+            const shippingDisplay = document.getElementById('ShippingFeeDisplay');
+            const totalDisplay = document.getElementById('OrderTotalDisplay');
+            const subtotal = Number('@subtotal.ToString("G", CultureInfo.InvariantCulture)');
+
+            if (deliveryToggle) {
+                deliveryToggle.addEventListener('change', function () {
+                    deliveryFields.forEach(function (field) {
+                        field.classList.toggle('d-none', deliveryToggle.checked);
+                    });
+                });
+            }
+
+            function formatCurrency(value) {
+                return value.toLocaleString('vi-VN') + ' đ';
+            }
+
+            function updateTotals(fee) {
+                shippingDisplay.textContent = formatCurrency(fee);
+                totalDisplay.textContent = formatCurrency(subtotal + fee);
+            }
+
+            shippingRadios.forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    const fee = Number(radio.dataset.fee || '0');
+                    hiddenShippingFee.value = fee.toString();
+                    updateTotals(fee);
+                });
+            });
+
+            // Ensure initial total uses selected radio or fallback to hidden field value.
+            const checkedShipping = document.querySelector('input[name="PhuongThucVanChuyen"]:checked');
+            if (checkedShipping) {
+                const initialFee = Number(checkedShipping.dataset.fee || '0');
+                hiddenShippingFee.value = initialFee.toString();
+                updateTotals(initialFee);
+            } else {
+                const initialFee = Number(hiddenShippingFee.value || '0');
+                updateTotals(initialFee);
+            }
+        })();
+    </script>
+}

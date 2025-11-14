@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.Order>
+
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+}
+
+<h2 class="mb-4">Lịch sử đơn hàng</h2>
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Bạn chưa có đơn hàng nào.</div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Mã đơn</th>
+                <th>Ngày đặt</th>
+                <th>Trạng thái</th>
+                <th>Ghi chú</th>
+                <th>Tổng tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@(item.OrderDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                    <td>@(!string.IsNullOrWhiteSpace(item.Status) ? item.Status : "Đang giao hàng")</td>
+                    <td>@item.Notes</td>
+                    <td>@item.TotalMoney.ToString("N0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

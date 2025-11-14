@@ -1,0 +1,243 @@
+@model Web_ban_do_thu_cong_my_nghe.ViewModels.Account.AccountDashboardVM
+@using System
+@using System.Linq
+@{
+    ViewData["Title"] = "Tài khoản của tôi";
+    var activeTab = (string)(ViewBag.ActiveTab ?? "overview");
+    Func<string, string, string> resolveImage = (source, fallback) =>
+    {
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return Url.Content(fallback);
+        }
+
+        if (source.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            return source;
+        }
+
+        if (source.StartsWith("~/"))
+        {
+            return Url.Content(source);
+        }
+
+        if (!source.Contains('/'))
+        {
+            return Url.Content($"~/hinh/{source}");
+        }
+
+        return Url.Content("~/" + source.TrimStart('/'));
+    };
+}
+
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <img src="@(resolveImage(Model.User.AvatarUrl, "~/img/avatar.jpg"))" alt="Avatar" class="rounded-circle mb-3" style="width: 96px; height: 96px; object-fit: cover;">
+                    <h5 class="card-title mb-1">@Model.User.Fullname</h5>
+                    <p class="text-muted mb-3">@Model.User.Email</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <span class="badge bg-primary">@(string.IsNullOrWhiteSpace(Model.User.Role) ? "Khách hàng" : Model.User.Role)</span>
+                        <span class="badge bg-secondary">@Model.TotalOrders đơn</span>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted d-block"><i class="bi bi-telephone me-1"></i>@(string.IsNullOrWhiteSpace(Model.User.PhoneNumber) ? "Chưa cập nhật" : Model.User.PhoneNumber)</small>
+                        <small class="text-muted d-block"><i class="bi bi-geo-alt me-1"></i>@(string.IsNullOrWhiteSpace(Model.User.Address) ? "Chưa cập nhật" : Model.User.Address)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="list-group list-group-flush shadow-sm">
+                <a asp-action="Account" asp-route-tab="overview" class="list-group-item list-group-item-action @(activeTab == "overview" ? "active" : null)">
+                    <i class="bi bi-speedometer2 me-2"></i>Tổng quan
+                </a>
+                <a asp-action="Account" asp-route-tab="favorites" class="list-group-item list-group-item-action @(activeTab == "favorites" ? "active" : null)">
+                    <i class="bi bi-heart me-2"></i>Danh sách yêu thích
+                </a>
+                <a asp-action="Account" asp-route-tab="notifications" class="list-group-item list-group-item-action @(activeTab == "notifications" ? "active" : null)">
+                    <i class="bi bi-bell me-2"></i>Thông báo
+                </a>
+                <a asp-action="Account" asp-route-tab="settings" class="list-group-item list-group-item-action @(activeTab == "settings" ? "active" : null)">
+                    <i class="bi bi-gear me-2"></i>Cài đặt tài khoản
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+
+            @switch (activeTab)
+            {
+                case "favorites":
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Danh sách yêu thích</h5>
+                                <span class="badge bg-primary">@Model.Favorites.Count mục</span>
+                            </div>
+                            @if (Model.Favorites.Count == 0)
+                            {
+                                <div class="alert alert-info mb-0">Bạn chưa có sản phẩm yêu thích nào. Hãy mua sắm và thêm sản phẩm vào danh sách nhé!</div>
+                            }
+                            else
+                            {
+                                <div class="row g-3">
+                                    @foreach (var item in Model.Favorites)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="card h-100 border-0 shadow-sm">
+                                                <img src="@(resolveImage(item.ImageUrl, "~/img/product-1.png"))" class="card-img-top" alt="@item.Name" style="height: 180px; object-fit: cover;">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-truncate" title="@item.Name">@item.Name</h6>
+                                                    <p class="text-primary fw-bold mb-1">@item.Price.ToString("N0") đ</p>
+                                                    <small class="text-muted">Đã mua @item.TimesPurchased lần</small>
+                                                </div>
+                                                <div class="card-footer bg-white border-0 d-flex justify-content-between">
+                                                    <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.ProductId" class="btn btn-outline-primary btn-sm">Xem</a>
+                                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="m-0">
+                                                        <input type="hidden" name="id" value="@item.ProductId" />
+                                                        <button type="submit" class="btn btn-primary btn-sm">Thêm vào giỏ</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    break;
+
+                case "notifications":
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Thông báo</h5>
+                                <span class="badge bg-primary">@Model.Notifications.Count mục</span>
+                            </div>
+                            @if (Model.Notifications.Count == 0)
+                            {
+                                <div class="alert alert-info mb-0">Hiện chưa có thông báo nào cho bạn.</div>
+                            }
+                            else
+                            {
+                                <ul class="list-group list-group-flush">
+                                    @foreach (var notification in Model.Notifications)
+                                    {
+                                        <li class="list-group-item px-0">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">@notification.Title</h6>
+                                                    <p class="mb-1 text-muted">@notification.Message</p>
+                                                    <small class="text-secondary">@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                                </div>
+                                                <span class="badge @(notification.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) ? "bg-success" : "bg-warning text-dark")">@notification.Status</span>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                    break;
+
+                case "settings":
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Cài đặt tài khoản</h5>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Họ tên</dt>
+                                <dd class="col-sm-8">@Model.Settings.Fullname</dd>
+
+                                <dt class="col-sm-4">Email</dt>
+                                <dd class="col-sm-8">@Model.Settings.Email</dd>
+
+                                <dt class="col-sm-4">Điện thoại</dt>
+                                <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Settings.PhoneNumber) ? "Chưa cập nhật" : Model.Settings.PhoneNumber)</dd>
+
+                                <dt class="col-sm-4">Địa chỉ</dt>
+                                <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Settings.Address) ? "Chưa cập nhật" : Model.Settings.Address)</dd>
+
+                                <dt class="col-sm-4">Nhận email</dt>
+                                <dd class="col-sm-8">@(Model.Settings.ReceiveEmail ? "Có" : "Không")</dd>
+
+                                <dt class="col-sm-4">Nhận SMS</dt>
+                                <dd class="col-sm-8">@(Model.Settings.ReceiveSms ? "Có" : "Không")</dd>
+                            </dl>
+                            <div class="d-flex gap-2 mt-4">
+                                <a asp-action="EditProfile" class="btn btn-primary">Chỉnh sửa thông tin</a>
+                                <a asp-action="ChangePassword" class="btn btn-outline-secondary">Đổi mật khẩu</a>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                default:
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Tổng quan tài khoản</h5>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="border rounded p-3 h-100">
+                                        <h6 class="text-muted">Tổng số đơn hàng</h6>
+                                        <p class="h4 mb-0">@Model.TotalOrders</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="border rounded p-3 h-100">
+                                        <h6 class="text-muted">Tổng chi tiêu</h6>
+                                        <p class="h4 mb-0">@Model.TotalSpent.ToString("N0") đ</p>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="border rounded p-3 h-100">
+                                        <h6 class="text-muted">Thông tin liên hệ</h6>
+                                        <p class="mb-1"><i class="bi bi-envelope me-2"></i>@Model.User.Email</p>
+                                        <p class="mb-1"><i class="bi bi-telephone me-2"></i>@(string.IsNullOrWhiteSpace(Model.User.PhoneNumber) ? "Chưa cập nhật" : Model.User.PhoneNumber)</p>
+                                        <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>@(string.IsNullOrWhiteSpace(Model.User.Address) ? "Chưa cập nhật" : Model.User.Address)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Sản phẩm yêu thích gần đây</h5>
+                                <a asp-action="Account" asp-route-tab="favorites" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                            </div>
+                            @if (Model.Favorites.Count == 0)
+                            {
+                                <div class="alert alert-info mb-0">Bạn chưa có sản phẩm yêu thích nào.</div>
+                            }
+                            else
+                            {
+                                <div class="row g-3">
+                                    @foreach (var item in Model.Favorites.Take(4))
+                                    {
+                                        <div class="col-sm-6">
+                                            <div class="d-flex border rounded h-100">
+                                                <img src="@(resolveImage(item.ImageUrl, "~/img/product-1.png"))" alt="@item.Name" style="width: 96px; height: 96px; object-fit: cover;" class="rounded-start">
+                                                <div class="p-3 flex-grow-1">
+                                                    <h6 class="mb-1 text-truncate" title="@item.Name">@item.Name</h6>
+                                                    <p class="mb-1 text-primary fw-bold">@item.Price.ToString("N0") đ</p>
+                                                    <small class="text-muted">Đã mua @item.TimesPurchased lần</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+</div>
