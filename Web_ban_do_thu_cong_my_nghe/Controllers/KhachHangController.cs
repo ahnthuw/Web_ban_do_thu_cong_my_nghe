@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
@@ -14,6 +16,7 @@ using Web_ban_do_thu_cong_my_nghe.Data;
 using Web_ban_do_thu_cong_my_nghe.Helpers;
 using Web_ban_do_thu_cong_my_nghe.ViewModels;
 using Web_ban_do_thu_cong_my_nghe.ViewModels.Account;
+using Web_ban_do_thu_cong_my_nghe.ViewModels.Contact;
 
 namespace Web_ban_do_thu_cong_my_nghe.Controllers
 {
@@ -86,67 +89,272 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         #endregion
 
 
-        #region Login in 
+        #region Contact
 
-        [AllowAnonymous] 
+        [Authorize(Roles = "Customer")]
+        [HttpGet]
+        public async Task<IActionResult> LienHe()
+        {
+            var customerIdValue = User.FindFirstValue(MySetting.CLAIM_CUSTOMERID);
+            if (string.IsNullOrEmpty(customerIdValue))
+            {
+                return RedirectToAction(nameof(DangNhap));
+            }
+
+            var admin = await GetPrimaryAdminAsync();
+            if (admin == null)
+            {
+                TempData["StatusMessage"] = "Hiện chưa có quản trị viên trực tuyến để hỗ trợ.";
+                return View(new ContactConversationVM { PartnerName = "Quản trị viên" });
+            }
+
+            var conversation = await BuildConversationAsync(int.Parse(customerIdValue), admin.Id, viewerIsAdmin: false);
+            return View(conversation);
+        }
+
+        [Authorize(Roles = "Customer")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LienHe(ContactSendVM input)
+        {
+            var customerIdValue = User.FindFirstValue(MySetting.CLAIM_CUSTOMERID);
+            if (string.IsNullOrEmpty(customerIdValue))
+            {
+                return RedirectToAction(nameof(DangNhap));
+            }
+
+            var admin = await GetPrimaryAdminAsync();
+            if (admin == null)
+            {
+                TempData["StatusMessage"] = "Hiện chưa có quản trị viên trực tuyến để hỗ trợ.";
+                return RedirectToAction(nameof(LienHe));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var conversation = await BuildConversationAsync(int.Parse(customerIdValue), admin.Id, viewerIsAdmin: false);
+                conversation.Composer = input;
+                return View(conversation);
+            }
+
+            var message = new ContactMessage
+            {
+                SenderId = int.Parse(customerIdValue),
+                ReceiverId = admin.Id,
+                Message = input.Message.Trim(),
+                SentAt = DateTime.UtcNow,
+                IsAdminMessage = false
+            };
+
+            db.ContactMessages.Add(message);
+            await db.SaveChangesAsync();
+
+            TempData["StatusMessage"] = "Đã gửi tin nhắn đến quản trị viên.";
+            return RedirectToAction(nameof(LienHe));
+        }
+
+        #endregion
+
+
+        #region Login
+
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult DangNhap(string? ReturnUrl)
         {
-            ConfigureLoginView("Đăng nhập tài khoản", nameof(DangNhap), nameof(KhachHangController).Replace("Controller", string.Empty), true, ReturnUrl);
+            // Cấu hình view login
+            ViewBag.LoginTitle = "Đăng nhập tài khoản";
+            ViewBag.FormAction = nameof(DangNhap);
+            ViewBag.FormController = "KhachHang";
+            ViewBag.ShowForgot = true;
+            ViewBag.ReturnUrl = ReturnUrl;
+
             return View(new LoginVM());
         }
 
-        [AllowAnonymous] 
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DangNhap(LoginVM model, string? ReturnUrl)
         {
-            ConfigureLoginView("Đăng nhập tài khoản", nameof(DangNhap), nameof(KhachHangController).Replace("Controller", string.Empty), true, ReturnUrl);
-            if (ModelState.IsValid)
+            // Cấu hình view login
+            ViewBag.LoginTitle = "Đăng nhập tài khoản";
+            ViewBag.FormAction = nameof(DangNhap);
+            ViewBag.FormController = "KhachHang";
+            ViewBag.ShowForgot = true;
+            ViewBag.ReturnUrl = ReturnUrl;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            // Tìm user theo tên đăng nhập
+            var user = await db.Users.SingleOrDefaultAsync(u => u.TenDangNhap == model.TenDangNhap);
+            if (user == null)
             {
-                var khachHang = db.Users.SingleOrDefault(kh => kh.TenDangNhap == model.TenDangNhap);
-
-                if (khachHang == null)
-                {
-                    ModelState.AddModelError("Lỗi", "Tên đăng nhập hoặc mật khẩu không đúng");
-                }
-                else
-                {
-
-                    if (!khachHang.Status)
-                    {
-                        ModelState.AddModelError("Lỗi", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin");
-                    }
-                    else
-                    {
-                        var normalizedRole = NormalizeRole(khachHang.Role);
-                        if (!IsPasswordValid(khachHang, model.Password, normalizedRole))
-                        {
-                            ModelState.AddModelError("Lỗi", "Sai thông tin đăng nhập ");
-                        }
-                        else
-                        {
-                            var claims = new List<Claim>
-                            {
-                                new Claim(ClaimTypes.Name, khachHang.TenDangNhap ?? khachHang.Fullname ?? string.Empty),
-                                new Claim(MySetting.CLAIM_CUSTOMERID, khachHang.Id.ToString()),
-                                new Claim(ClaimTypes.Role, normalizedRole)
-                            };
-
-                            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-                            await HttpContext.SignInAsync(claimsPrincipal);
-
-                            return RedirectAfterLogin(normalizedRole, ReturnUrl);
-                        }
-                    }
-                }
+                ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
             }
 
-            return View(model);
+            if (!user.Status)
+            {
+                ModelState.AddModelError("", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+                return View(model);
+            }
+
+            var normalizedRole = NormalizeRole(user.Role);
+            if (!IsPasswordValid(user, model.Password, normalizedRole))
+            {
+                ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
+            }
+
+            // Tạo claim với đầy đủ role cho cả khách hàng và admin
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.TenDangNhap ?? user.Fullname ?? string.Empty),
+                new Claim(MySetting.CLAIM_CUSTOMERID, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, normalizedRole)
+            };
+
+            if (string.Equals(normalizedRole, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                claims.Add(new Claim("AdminId", user.Id.ToString()));
+            }
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            // Đăng nhập
+            await HttpContext.SignInAsync(principal);
+
+            // Lưu session userId
+            HttpContext.Session.SetInt32(MySetting.SESSION_USER_ID_KEY, user.Id);
+
+            // Redirect sau khi login
+            if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                return Redirect(ReturnUrl);
+
+            return RedirectAfterLogin(normalizedRole, ReturnUrl);
         }
 
         #endregion
+
+
+        #region Forgot Password
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult QuenMatKhau()
+        {
+            ViewData["Title"] = "Quên mật khẩu";
+            return View(new ForgotPasswordVM());
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuenMatKhau(ForgotPasswordVM model)
+        {
+            ViewData["Title"] = "Quên mật khẩu";
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await db.Users.SingleOrDefaultAsync(u => u.TenDangNhap == model.TenDangNhap);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy tài khoản với tên đăng nhập đã nhập.");
+                return View(model);
+            }
+
+            var providedPhone = (model.SoDienThoai ?? string.Empty).Trim();
+            var providedEmail = (model.Email ?? string.Empty).Trim();
+            var phoneMatches = string.Equals((user.PhoneNumber ?? string.Empty).Trim(), providedPhone, StringComparison.OrdinalIgnoreCase);
+            var emailMatches = string.Equals((user.Email ?? string.Empty).Trim(), providedEmail, StringComparison.OrdinalIgnoreCase);
+
+            if (!phoneMatches || !emailMatches)
+            {
+                ModelState.AddModelError(string.Empty, "Thông tin xác minh không khớp. Vui lòng kiểm tra lại số điện thoại và email.");
+                return View(model);
+            }
+
+            var resetToken = MyUtil.GenerateRamdomKey(32);
+            HttpContext.Session.SetInt32(MySetting.PASSWORD_RESET_USER_KEY, user.Id);
+            HttpContext.Session.SetString(MySetting.PASSWORD_RESET_TOKEN_KEY, resetToken);
+
+            TempData["StatusMessage"] = "Xác thực thành công. Vui lòng đặt lại mật khẩu mới.";
+            return RedirectToAction(nameof(ResetMatKhau));
+        }
+
+        #endregion
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> ResetMatKhau()
+        {
+            ViewData["Title"] = "Đặt lại mật khẩu";
+
+            var userId = HttpContext.Session.GetInt32(MySetting.PASSWORD_RESET_USER_KEY);
+            var token = HttpContext.Session.GetString(MySetting.PASSWORD_RESET_TOKEN_KEY);
+            if (userId == null || string.IsNullOrEmpty(token))
+            {
+                TempData["StatusMessage"] = "Phiên xác thực đã hết hạn. Vui lòng xác thực lại thông tin.";
+                return RedirectToAction(nameof(QuenMatKhau));
+            }
+
+            var user = await db.Users.FindAsync(userId.Value);
+            if (user == null)
+            {
+                ClearPasswordResetSession();
+                TempData["StatusMessage"] = "Không tìm thấy tài khoản yêu cầu đặt lại mật khẩu.";
+                return RedirectToAction(nameof(QuenMatKhau));
+            }
+
+            ViewBag.Username = user.TenDangNhap ?? user.Email ?? user.Fullname;
+            return View(new ResetPasswordVM());
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetMatKhau(ResetPasswordVM model)
+        {
+            ViewData["Title"] = "Đặt lại mật khẩu";
+
+            var userId = HttpContext.Session.GetInt32(MySetting.PASSWORD_RESET_USER_KEY);
+            var token = HttpContext.Session.GetString(MySetting.PASSWORD_RESET_TOKEN_KEY);
+            if (userId == null || string.IsNullOrEmpty(token))
+            {
+                TempData["StatusMessage"] = "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng xác thực lại thông tin.";
+                return RedirectToAction(nameof(QuenMatKhau));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await db.Users.FindAsync(userId.Value);
+            if (user == null)
+            {
+                ClearPasswordResetSession();
+                TempData["StatusMessage"] = "Không tìm thấy tài khoản. Vui lòng thử lại.";
+                return RedirectToAction(nameof(QuenMatKhau));
+            }
+
+            var newRandomKey = MyUtil.GenerateRamdomKey();
+            user.RandomKey = newRandomKey;
+            user.Password = model.MatKhauMoi.ToMd5Hash(newRandomKey);
+
+            db.Users.Update(user);
+            await db.SaveChangesAsync();
+
+            ClearPasswordResetSession();
+            TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công. Mời bạn đăng nhập.";
+            return RedirectToAction(nameof(DangNhap));
+        }
+
 
         private void ConfigureLoginView(string title, string actionName, string controllerName, bool showForgot, string? returnUrl = null, string? description = null)
         {
@@ -197,6 +405,48 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             }
 
             return Redirect("/");
+        }
+
+        private void ClearPasswordResetSession()
+        {
+            HttpContext.Session.Remove(MySetting.PASSWORD_RESET_USER_KEY);
+            HttpContext.Session.Remove(MySetting.PASSWORD_RESET_TOKEN_KEY);
+        }
+
+        private async Task<User?> GetPrimaryAdminAsync()
+        {
+            return await db.Users
+                .Where(u => u.Role != null && u.Role.Trim().ToLower() == "admin")
+                .OrderBy(u => u.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<ContactConversationVM> BuildConversationAsync(int viewerId, int partnerId, bool viewerIsAdmin)
+        {
+            var partner = await db.Users.FindAsync(partnerId);
+            var messages = await db.ContactMessages
+                .AsNoTracking()
+                .Where(m => (m.SenderId == viewerId && m.ReceiverId == partnerId) || (m.SenderId == partnerId && m.ReceiverId == viewerId))
+                .OrderBy(m => m.SentAt)
+                .ToListAsync();
+
+            var conversation = new ContactConversationVM
+            {
+                PartnerId = partnerId,
+                PartnerName = partner?.Fullname ?? partner?.TenDangNhap ?? partner?.Email ?? "Quản trị viên",
+                PartnerRoleLabel = viewerIsAdmin ? "Khách hàng" : "Quản trị viên",
+                Messages = messages.Select(m => new ContactMessageVM
+                {
+                    Id = m.Id,
+                    Content = m.Message,
+                    SentAt = m.SentAt,
+                    IsOwn = viewerIsAdmin ? m.IsAdminMessage : !m.IsAdminMessage,
+                    IsAdminMessage = m.IsAdminMessage
+                }).ToList(),
+                Composer = new ContactSendVM()
+            };
+
+            return conversation;
         }
 
        
@@ -428,6 +678,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> DangXuat()
         {
+            HttpContext.Session.Remove(MySetting.SESSION_USER_ID_KEY);
             await HttpContext.SignOutAsync();
             return Redirect("/");
         }
@@ -447,6 +698,34 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 .ToListAsync();
 
             return View(orders);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> HoaDon(int id)
+        {
+            var customerIdValue = User.FindFirstValue(MySetting.CLAIM_CUSTOMERID);
+            if (string.IsNullOrEmpty(customerIdValue) || !int.TryParse(customerIdValue, out var customerId))
+            {
+                return RedirectToAction("DangNhap");
+            }
+
+            var order = await db.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == customerId);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            var invoice = InvoiceVM.FromOrder(order, false);
+
+            invoice.BackUrl = Url.Action(nameof(LichSuDonHang));
+            invoice.BackLabel = "Quay về lịch sử đơn hàng";
+
+            return View("~/Views/Shared/Invoice.cshtml", invoice);
         }
     }
 }

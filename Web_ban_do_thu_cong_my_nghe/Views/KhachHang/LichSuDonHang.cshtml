@@ -20,6 +20,7 @@ else
                 <th>Trạng thái</th>
                 <th>Ghi chú</th>
                 <th>Tổng tiền</th>
+                <th>Hóa đơn</th>
             </tr>
         </thead>
         <tbody>
@@ -31,6 +32,11 @@ else
                     <td>@OrderStatusHelper.GetLabel(item.Status)</td>
                     <td>@item.Notes</td>
                     <td>@item.TotalMoney.ToString("N0")</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="HoaDon" asp-route-id="@item.Id">
+                            Xem hóa đơn
+                        </a>
+                    </td>
                 </tr>
             }
         </tbody>

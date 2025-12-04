@@ -22,270 +22,330 @@ namespace Web_ban_do_thu_cong_my_nghe.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.ContactMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsAdminMessage")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("contact_messages", (string)null);
+                });
+
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("name");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__categori__3213E83F6B1F42D9");
+                    b.HasKey("Id");
 
-                    b.ToTable("categories", (string)null);
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.NhanVien", b =>
+                {
+                    b.Property<int>("MaNV")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaNV"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HoTen")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MatKhau")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MaNV");
+
+                    b.ToTable("NhanVien", (string)null);
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.Order", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("notes");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("OrderDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("order_date")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ShippingAddress")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("shipping_address");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShippingPhone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("shipping_phone");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Pending")
-                        .HasColumnName("status");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalMoney")
-                        .HasColumnType("decimal(15, 2)")
-                        .HasColumnName("total_money");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
+                        .HasColumnType("int");
 
-                    b.HasKey("Id")
-                        .HasName("PK__orders__3213E83F11161111");
+                    b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("orders", (string)null);
+                    b.ToTable("Order", (string)null);
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.OrderDetail", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("OrderId")
-                        .HasColumnType("int")
-                        .HasColumnName("order_id");
+                        .HasColumnType("int");
 
                     b.Property<decimal>("PriceAtPurchase")
-                        .HasColumnType("decimal(12, 2)")
-                        .HasColumnName("price_at_purchase");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("ProductId")
-                        .HasColumnType("int")
-                        .HasColumnName("product_id");
+                        .HasColumnType("int");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("int")
-                        .HasColumnName("quantity");
+                        .HasColumnType("int");
 
-                    b.HasKey("Id")
-                        .HasName("PK__order_de__3213E83F13665CD4");
+                    b.Property<int?>("TrangThaiMaTrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("order_details", (string)null);
+                    b.HasIndex("TrangThaiMaTrangThai");
+
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("CategoryId")
-                        .HasColumnType("int")
-                        .HasColumnName("category_id");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("description");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("image_url");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(12, 2)")
-                        .HasColumnName("price");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Stock")
-                        .HasColumnType("int")
-                        .HasColumnName("stock");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
-                    b.HasKey("Id")
-                        .HasName("PK__products__3213E83F31DD2F94");
+                    b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("products", (string)null);
+                    b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.TrangThai", b =>
+                {
+                    b.Property<int>("MaTrangThai")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MoTa")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("TenTrangThai")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaTrangThai")
+                        .HasName("PK__TrangTha__14109724137F1578");
+
+                    b.ToTable("TrangThai", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            MaTrangThai = 0,
+                            MoTa = "Đơn hàng mới khởi tạo",
+                            TenTrangThai = "Chờ xử lý"
+                        },
+                        new
+                        {
+                            MaTrangThai = 10,
+                            MoTa = "Đơn hàng đã được xác nhận bởi nhân viên",
+                            TenTrangThai = "Đã xác nhận"
+                        },
+                        new
+                        {
+                            MaTrangThai = 20,
+                            MoTa = "Đơn hàng đã bàn giao cho đơn vị vận chuyển",
+                            TenTrangThai = "Đang giao hàng"
+                        },
+                        new
+                        {
+                            MaTrangThai = 30,
+                            MoTa = "Đơn hàng đã giao thành công",
+                            TenTrangThai = "Đã hoàn thành"
+                        },
+                        new
+                        {
+                            MaTrangThai = 40,
+                            MoTa = "Đơn hàng đã bị hủy",
+                            TenTrangThai = "Đã hủy"
+                        });
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("address");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("email");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Fullname")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("fullname");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
-                        .HasColumnName("gender");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Hinh")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("Hinh");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("NgaySinh")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("password");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("phone_number");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RandomKey")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("RandomKey");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("customer")
-                        .HasColumnName("role");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Status")
-                        .HasColumnType("bit")
-                        .HasColumnName("status");
+                        .HasColumnType("bit");
 
                     b.Property<string>("TenDangNhap")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("TenDangNhap");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__users__3213E83F3C75CBD0");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Email" }, "UQ__users__AB6E61645102B94B")
-                        .IsUnique();
+                    b.ToTable("User", (string)null);
+                });
 
-                    b.ToTable("users", (string)null);
+            modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.ContactMessage", b =>
+                {
+                    b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.Order", b =>
                 {
                     b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.User", "User")
                         .WithMany("Orders")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK__orders__user_id__45F365D3");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -294,15 +354,15 @@ namespace Web_ban_do_thu_cong_my_nghe.Migrations
                 {
                     b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.Order", "Order")
                         .WithMany("OrderDetails")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK__order_det__order__48CFD27E");
+                        .HasForeignKey("OrderId");
 
                     b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.Product", "Product")
                         .WithMany("OrderDetails")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK__order_det__produ__49C3F6B7");
+                        .HasForeignKey("ProductId");
+
+                    b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.TrangThai", null)
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("TrangThaiMaTrangThai");
 
                     b.Navigation("Order");
 
@@ -313,8 +373,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Migrations
                 {
                     b.HasOne("Web_ban_do_thu_cong_my_nghe.Data.Category", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .HasConstraintName("FK__products__catego__3C69FB99");
+                        .HasForeignKey("CategoryId");
 
                     b.Navigation("Category");
                 });
@@ -330,6 +389,11 @@ namespace Web_ban_do_thu_cong_my_nghe.Migrations
                 });
 
             modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.Product", b =>
+                {
+                    b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("Web_ban_do_thu_cong_my_nghe.Data.TrangThai", b =>
                 {
                     b.Navigation("OrderDetails");
                 });

@@ -9,7 +9,12 @@
         <p class="text-muted mb-0">Theo dõi, thêm mới và chỉnh sửa sản phẩm trong cửa hàng.</p>
     </div>
     <div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-success" asp-controller="Admin" asp-action="Dashboard">
+                <i class="fa fa-chart-line me-2"></i>Quay về Dashboard
+            </a>
         <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus me-2"></i>Thêm sản phẩm</a>
+        </div>
     </div>
 </div>
 
@@ -39,10 +44,11 @@
                         <td>@product.Id</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="@(!string.IsNullOrWhiteSpace(product.ImageUrl) ? product.ImageUrl : "https://via.placeholder.com/60")" class="rounded me-3" width="60" height="60" style="object-fit:cover;" alt="@product.Name" />
+                                <img src="@(!string.IsNullOrWhiteSpace(product.ImageUrl) ? $"/hinh/{product.ImageUrl}" : "https://via.placeholder.com/60")"
+                                     class="rounded me-3" width="60" height="60" style="object-fit:cover;" alt="@product.Name" />
+
                                 <div>
                                     <strong>@product.Name</strong>
-                                    <div class="text-muted small">@product.Description</div>
                                 </div>
                             </div>
                         </td>
@@ -64,6 +70,7 @@
                         </td>
                         <td>@product.UpdatedAt?.ToString("dd/MM/yyyy")</td>
                         <td class="text-end">
+                            
                             <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary me-2">Sửa</a>
                             <form asp-action="Delete" asp-route-id="@product.Id" method="post" class="d-inline" onsubmit="return confirm('Xác nhận xoá sản phẩm này?');">
                                 @Html.AntiForgeryToken()

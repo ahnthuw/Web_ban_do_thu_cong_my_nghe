@@ -1,284 +1,279 @@
 ﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.ViewModels.CartItem>
 @using System.Linq
-@using System.Globalization
+@using Web_ban_do_thu_cong_my_nghe.Data
 @{
     ViewData["Title"] = "Giỏ hàng";
     var hasItems = Model.Any();
     var subtotal = ViewBag.CartSubtotal is decimal sub ? sub : 0m;
     var shippingFee = ViewBag.ShippingFee is decimal ship ? ship : 0m;
     var discountAmount = ViewBag.DiscountAmount is decimal discount ? discount : 0m;
-    var total = ViewBag.CartTotal is decimal totalValue ? totalValue : subtotal + shippingFee - discountAmount;
+    var totalBeforeTax = ViewBag.CartTotalBeforeTax is decimal beforeTax ? beforeTax : subtotal + shippingFee - discountAmount;
+    var taxAmount = ViewBag.CartTax is decimal tax ? tax : 0m;
+    var taxRate = ViewBag.CartTaxRate is decimal rate ? rate : 0m;
+    var total = ViewBag.CartTotal is decimal totalValue ? totalValue : totalBeforeTax + taxAmount;
     var appliedCoupon = ViewBag.CouponCode as string ?? string.Empty;
     var couponDescription = ViewBag.CouponDescription as string ?? string.Empty;
     var couponMessage = ViewBag.CouponMessage as string;
     var updateQuantityUrl = Url.Action("UpdateQuantity", "Cart");
+    var availableCoupons = ViewBag.AvailableCoupons as IEnumerable<DiscountCode> ?? Enumerable.Empty<DiscountCode>();
+    var hasAvailableCoupons = availableCoupons.Any();
 }
 
-<!-- Single Page Header start -->
-<div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Cart Page</h1>
-    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
-        <li class="breadcrumb-item"><a href="#">Home</a></li>
-        <li class="breadcrumb-item"><a href="#">Pages</a></li>
-        <li class="breadcrumb-item active text-white">Cart Page</li>
-    </ol>
-</div>
-<!-- Single Page Header End -->
-<!-- Cart Page Start -->
-<div class="container-fluid py-5">
-    <div class="container py-5">
-        @if (hasItems)
-        {
-            <div class="table-responsive" data-cart-table data-update-url="@updateQuantityUrl">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col">Tên sản phẩm</th>
-                            <th scope="col">Loại</th>
-                            <th scope="col">Giá</th>
-                            <th scope="col">Số lượng</th>
-                            <th scope="col">Thành tiền</th>
-                            <th scope="col">Xử lý</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr data-item-id="@item.MaHh">
-                                <th scope="row">
-                                    <p class="mb-0 py-4">
-                                        <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
-                                            @item.TenHH
-                                        </a>
-                                    </p>
-                                </th>
-                                <td>
-                                    <p class="mb-0 py-4">@item.MaHh</p>
-                                </td>
-                                <td>
-                                    <p class="mb-0 py-4">@item.DonGia.ToString("N0")</p>
-                                </td>
-                                <td>
-                                    <div class="input-group quantity py-4" style="width: 100px;">
-                                        <div class="input-group-btn">
-                                            <button type="button" class="btn btn-sm btn-minus rounded-circle bg-light border" data-quantity-action="decrease">
-                                                <i class="fa fa-minus"></i>
-                                            </button>
-                                        </div>
-                                        <input type="text" class="form-control form-control-sm text-center border-0 quantity-input" data-quantity-input value="@item.SoLuong">
-                                        <div class="input-group-btn">
-                                            <button type="button" class="btn btn-sm btn-plus rounded-circle bg-light border" data-quantity-action="increase">
-                                                <i class="fa fa-plus"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="mb-0 py-4 line-total" data-line-total>@item.ThanhTien.ToString("N0")</p>
-                                </td>
-                                <td class="py-4">
-                                    <a asp-action="RemoveCart" asp-controller="Cart" asp-route-id="@item.MaHh" class="btn btn-md rounded-circle bg-light border">
-                                        <i class="fa fa-times text-danger"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-info">Giỏ hàng của bạn đang trống. Hãy tiếp tục mua sắm để thêm sản phẩm!</div>
-        }
-        
-        @if (!string.IsNullOrEmpty(couponMessage))
-        {
-            <div class="alert alert-warning mt-4">@couponMessage</div>
-        }
-
-        <div class="mt-5 d-flex flex-wrap gap-3 align-items-center">
-            <form asp-action="ApplyCoupon" method="post" class="d-flex flex-wrap gap-3 align-items-center">
-                @Html.AntiForgeryToken()
-                <input type="text" name="couponCode" value="@appliedCoupon" class="border-0 border-bottom rounded-pill py-3 px-4" placeholder="Nhập mã giảm giá" @(hasItems ? null : "disabled")>
-                <button class="btn btn-primary rounded-pill py-3 px-4" type="submit" @(hasItems ? null : "disabled")>Áp dụng phiếu giảm giá</button>
-            </form>
-            @if (!string.IsNullOrEmpty(appliedCoupon))
-            {
-                <form asp-action="RemoveCoupon" method="post">
-                    @Html.AntiForgeryToken()
-                    <button class="btn btn-outline-secondary rounded-pill py-3 px-4" type="submit">Hủy mã</button>
-                </form>
-            }
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <span class="badge rounded-pill bg-dark text-uppercase">Giỏ hàng của bạn</span>
+            <h2 class="mt-2 mb-1">@((hasItems ? "Kiểm tra lại trước khi thanh toán" : "Bạn chưa có sản phẩm nào"))</h2>
+            <p class="text-muted mb-0">Theo dõi số lượng, áp dụng mã giảm giá và hoàn tất đơn hàng chỉ với vài bước.</p>
+        </div>
+        <div class="text-end">
+            <p class="fs-4 fw-semibold text-primary mb-1">@subtotal.ToString("N0") đ</p>
+            <small class="text-muted">Tổng phụ hiện tại</small>
         </div>
     </div>
 
-    <div class="row g-4 justify-content-end">
-        <div class="col-8"></div>
-        <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
-            <div class="bg-light rounded">
-                <div class="p-4">
-                    <h1 class="display-6 mb-4">Tổng tiền <span class="fw-normal">giỏ hàng</span></h1>
+    @if (!string.IsNullOrEmpty(couponMessage))
+    {
+        <div class="alert alert-warning border-0 rounded-4 shadow-sm mb-4">
+            <i class="fa fa-info-circle me-2"></i>@couponMessage
+        </div>
+    }
 
-                    <div class="d-flex justify-content-between mb-3">
-                        <h5 class="mb-0 me-2">Tổng phụ:</h5>
-                        <p class="mb-0"><b data-cart-subtotal>@subtotal.ToString("N0")</b></p>
-                    </div>
-
-                    <div class="d-flex justify-content-between mb-3">
-                        <h5 class="mb-0 me-2">Vận chuyển:</h5>
-                        <p class="mb-0"><b data-shipping-fee>@shippingFee.ToString("N0")</b></p>
-                    </div>
-
-                    <div class="d-flex justify-content-between mb-3 text-success @(discountAmount > 0 ? string.Empty : "d-none")" data-discount-row>
-                        <h5 class="mb-0 me-2">Giảm giá:</h5>
-                        <p class="mb-0" data-discount-amount>-@discountAmount.ToString("N0")</p>
-                    </div>
-                    @if (!string.IsNullOrEmpty(couponDescription))
+    <div class="row g-4">
+        <!-- LEFT: Danh sách sản phẩm + coupon -->
+        <div class="col-lg-8">
+            <!-- Card sản phẩm -->
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-body p-3">
+                    @if (hasItems)
                     {
-                        <p class="mb-3 text-success" data-discount-description>@couponDescription</p>
+                        <div class="table-responsive" data-cart-table data-update-url="@updateQuantityUrl">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light text-uppercase small text-muted">
+                                    <tr>
+                                        <th class="ps-4">Sản phẩm</th>
+                                        <th>Mã</th>
+                                        <th>Đơn giá</th>
+                                        <th style="width:120px;">Số lượng</th>
+                                        <th>Thành tiền</th>
+                                        <th class="text-center pe-4">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr data-item-id="@item.MaHh" class="border-top">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="ratio ratio-1x1 rounded-3 bg-light" style="width:64px;">
+                                                        <img src="@($"/hinh/{item.Hinh}")" alt="@item.TenHH" class="img-fluid rounded-3" onerror="this.style.display='none'" />
+                                                    </div>
+                                                    <div>
+                                                        <a class="fw-semibold text-decoration-none" asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">@item.TenHH</a>
+                                                       
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-muted">#@item.MaHh</td>
+                                            <td class="fw-semibold">@item.DonGia.ToString("N0") đ</td>
+                                            <td>
+                                                <div class="input-group quantity mx-auto" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-quantity-action="decrease"><i class="fa fa-minus"></i></button>
+                                                    <input type="text" class="form-control form-control-sm text-center border-0 quantity-input" value="@item.SoLuong">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-quantity-action="increase"><i class="fa fa-plus"></i></button>
+                                                </div>
+                                            </td>
+                                            <td class="fw-semibold line-total" data-line-total>@item.ThanhTien.ToString("N0") đ</td>
+                                            <td class="text-center pe-4">
+                                                <a asp-action="RemoveCart" asp-controller="Cart" asp-route-id="@item.MaHh" class="btn btn-light rounded-circle shadow-sm">
+                                                    <i class="fa fa-times text-danger"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fa fa-shopping-basket fa-3x text-primary mb-3"></i>
+                            <h5>Giỏ hàng của bạn đang trống</h5>
+                            <p class="text-muted">Khám phá sản phẩm và thêm vào giỏ để bắt đầu mua sắm.</p>
+                            <a class="btn btn-primary rounded-pill px-4" asp-controller="HangHoa" asp-action="Index">Tiếp tục mua sắm</a>
+                        </div>
+                    }
+                </div>
+            </div>
 
-                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
-                        <h5 class="mb-0 ps-4 me-2">Tổng cộng:</h5>
-                        <p class="mb-0 pe-4"><b data-cart-total>@total.ToString("N0")</b></p>
+            <!-- Card mã giảm giá -->
+            <div class="card shadow-sm rounded-4 mb-4 p-3">
+                <form asp-action="ApplyCoupon" method="post" class="d-flex gap-2" data-coupon-form>
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="couponCode" class="form-control rounded-pill" placeholder="Nhập mã giảm giá" value="@appliedCoupon" data-coupon-input @(hasItems ? null : "disabled") />
+                    <button type="submit" class="btn btn-primary rounded-pill" @(hasItems ? null : "disabled")>Áp dụng</button>
+                </form>
+
+                @if (!string.IsNullOrEmpty(appliedCoupon))
+                {
+                    <form asp-action="RemoveCoupon" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary rounded-pill">Hủy mã</button>
+                    </form>
+                }
+
+                @if (hasItems && hasAvailableCoupons)
+                {
+                    <div class="mt-3">
+                        <h6 class="mb-2">Gợi ý mã giảm giá</h6>
+                        <div class="row g-2">
+                            @foreach (var coupon in availableCoupons)
+                            {
+                                var percentText = (coupon.PercentOff ?? 0m) > 0 ? $"{coupon.PercentOff.Value * 100:0.#}%" : null;
+                                var amountText = (coupon.AmountOff ?? 0m) > 0 ? $"{coupon.AmountOff.Value:N0} đ" : null;
+                                var valueText = percentText ?? amountText ?? "Ưu đãi";
+                                var minOrderText = coupon.MinOrderValue > 0 ? $"ĐH tối thiểu {coupon.MinOrderValue:N0} đ" : "Không yêu cầu tối thiểu";
+                                var expiryText = coupon.EndDate.HasValue ? $"Hết hạn: {coupon.EndDate.Value:dd/MM/yyyy}" : "Không giới hạn";
+
+                                <div class="col-md-6">
+                                    <div class="border rounded-4 p-3 h-100 bg-light d-flex flex-column justify-content-between">
+                                        <div>
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="badge bg-success text-white fw-semibold">@coupon.Code</span>
+                                                <small class="text-muted">@expiryText</small>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(coupon.Description))
+                                            {
+                                                <p class="small text-muted mb-1">@coupon.Description</p>
+                                            }
+                                            <p class="fw-semibold mb-1">Giảm @valueText</p>
+                                            <p class="small text-muted mb-2">@minOrderText</p>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" data-apply-coupon="@coupon.Code">Áp dụng mã này</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
+                }
+            </div>
+        </div>
 
-                    <a class="btn border-secondary rounded-pill px-4 py-3 text-uppercase mb-4 ms-4" asp-action="Checkout" asp-controller="Cart">
-                        Thanh toán
-                    </a>
+        <!-- RIGHT: Tổng quan đơn hàng -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm rounded-4 " >
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Tổng quan đơn hàng</h5>
+                    <div class="d-flex justify-content-between mb-2"><span>Tổng phụ</span><span data-cart-subtotal>@subtotal.ToString("N0") đ</span></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Vận chuyển</span><span data-shipping-fee>@shippingFee.ToString("N0") đ</span></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Thuế (@(taxRate * 100)%)</span><span data-tax-amount>@taxAmount.ToString("N0") đ</span></div>
+                    @if (discountAmount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 text-success" data-discount-row><span>Giảm giá</span><span data-discount-amount>-@discountAmount.ToString("N0") đ</span></div>
+                    }
+                    <hr />
+                    
+                    <div class="d-flex justify-content-between fs-5 fw-bold text-primary mb-3"><span>Tổng thanh toán</span><span data-cart-total>@total.ToString("N0") đ</span></div>
+
+                    @* Nút thanh toán fix lỗi Razor *@
+                    @if (hasItems)
+                    {
+                        <a class="btn btn-primary rounded-pill w-100" asp-action="Checkout" asp-controller="Cart">Tiến hành thanh toán</a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary rounded-pill w-100" type="button" disabled>Tiến hành thanh toán</button>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Cart Page End -->
 
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const cartTable = document.querySelector('[data-cart-table]');
-            if (!cartTable) {
-                return;
-            }
+            if (!cartTable) return;
 
             const updateUrl = cartTable.getAttribute('data-update-url');
-            if (!updateUrl) {
-                return;
-            }
-
-            const subtotalEl = document.querySelector('[data-cart-subtotal]');
-            const shippingEl = document.querySelector('[data-shipping-fee]');
-            const discountRow = document.querySelector('[data-discount-row]');
-            const discountAmountEl = document.querySelector('[data-discount-amount]');
-            const totalEl = document.querySelector('[data-cart-total]');
             const formatter = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-            const quantityInputs = cartTable.querySelectorAll('[data-quantity-input]');
-            quantityInputs.forEach((input) => {
-                input.addEventListener('change', () => queueQuantityUpdate(input));
-                input.addEventListener('input', () => queueQuantityUpdate(input));
+            // Xử lý + / -
+            cartTable.querySelectorAll('[data-quantity-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = btn.closest('.quantity').querySelector('input');
+                    let val = parseInt(input.value);
+                    val = btn.dataset.quantityAction === 'increase' ? val + 1 : val - 1;
+                    if (val < 1) val = 1;
+                    input.value = val;
+                    input.dispatchEvent(new Event('change'));
+                });
             });
 
-            cartTable.addEventListener('click', (event) => {
-                const button = event.target.closest('[data-quantity-action]');
-                if (!button) {
-                    return;
-                }
-
-                event.preventDefault();
-                const input = button.closest('.quantity')?.querySelector('[data-quantity-input]');
-                if (!input) {
-                    return;
-                }
-
-                let current = parseInt(input.value, 10);
-                if (!Number.isFinite(current) || current < 0) {
-                    current = 0;
-                }
-
-                current = button.dataset.quantityAction === 'increase' ? current + 1 : current - 1;
-                if (current < 1) {
-                    current = 1;
-                }
-
-                input.value = current;
-                performQuantityUpdate(input);
-            });
-
-            function queueQuantityUpdate(input) {
-                clearTimeout(input._cartUpdateTimer);
-                input._cartUpdateTimer = setTimeout(() => performQuantityUpdate(input), 500);
-            }
-
-            function performQuantityUpdate(input) {
-                const row = input.closest('tr');
-                if (!row || row.dataset.updating === 'true') {
-                    return;
-                }
-
-                let quantity = parseInt(input.value, 10);
-                if (!Number.isInteger(quantity) || quantity < 1) {
-                    quantity = 1;
-                    input.value = quantity;
-                }
-
-                const productId = row.dataset.itemId;
-                if (!productId) {
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('id', productId);
-                formData.append('quantity', quantity);
-
-                row.dataset.updating = 'true';
-
-                fetch(updateUrl, { method: 'POST', body: formData })
-                    .then((response) => response.ok ? response.json() : Promise.reject(new Error('Không thể cập nhật giỏ hàng.')))
-                    .then((data) => {
-                        if (!data || data.success === false) {
-                            throw new Error(data?.message ?? 'Không thể cập nhật giỏ hàng.');
-                        }
-
-                        input.value = data.quantity;
-
+            // Cập nhật số lượng
+            cartTable.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('change', () => {
+                    const row = input.closest('tr');
+                    const id = row.dataset.itemId;
+                    fetch(updateUrl, {
+                        method: 'POST',
+                        body: new URLSearchParams({ id, quantity: input.value })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.success) throw new Error(data.message);
                         const lineTotalEl = row.querySelector('[data-line-total]');
-                        if (lineTotalEl) {
-                            lineTotalEl.textContent = formatter.format(data.lineTotal);
-                        }
+                        if (lineTotalEl) lineTotalEl.textContent = formatter.format(data.lineTotal) + ' đ';
 
-                        if (subtotalEl) {
-                            subtotalEl.textContent = formatter.format(data.subtotal);
-                        }
+                        const subtotalEl = document.querySelector('[data-cart-subtotal]');
+                        if (subtotalEl) subtotalEl.textContent = formatter.format(data.subtotal) + ' đ';
 
-                        if (shippingEl) {
-                            shippingEl.textContent = formatter.format(data.shippingFee);
-                        }
+                        const shippingEl = document.querySelector('[data-shipping-fee]');
+                        if (shippingEl && data.shippingFee !== undefined) shippingEl.textContent = formatter.format(data.shippingFee) + ' đ';
 
+                        const taxEl = document.querySelector('[data-tax-amount]');
+                        if (taxEl && data.taxAmount !== undefined) taxEl.textContent = formatter.format(data.taxAmount) + ' đ';
+
+                        const totalBeforeTaxEl = document.querySelector('[data-total-before-tax]');
+                        if (totalBeforeTaxEl && data.totalBeforeTax !== undefined) totalBeforeTaxEl.textContent = formatter.format(data.totalBeforeTax) + ' đ';
+
+                        const totalEl = document.querySelector('[data-cart-total]');
+                        if (totalEl) totalEl.textContent = formatter.format(data.totalAfterTax ?? data.total ?? 0) + ' đ';
+
+                        const discountRow = document.querySelector('[data-discount-row]');
+                        const discountAmountEl = document.querySelector('[data-discount-amount]');
                         if (discountRow && discountAmountEl) {
                             if (data.discount > 0) {
                                 discountRow.classList.remove('d-none');
-                                discountAmountEl.textContent = '-' + formatter.format(data.discount);
+                                discountAmountEl.textContent = '-' + formatter.format(data.discount) + ' đ';
                             } else {
                                 discountRow.classList.add('d-none');
-                                discountAmountEl.textContent = '-0';
+                                discountAmountEl.textContent = '-0 đ';
                             }
                         }
+                    })
+                    .catch(err => alert(err.message));
+                });
+            });
 
-                        if (totalEl) {
-                            totalEl.textContent = formatter.format(data.total);
-                        }
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        alert(error.message || 'Cập nhật giỏ hàng thất bại.');
-                    })
-                    .finally(() => {
-                        delete row.dataset.updating;
-                    });
-            }
+            // Áp dụng mã nhanh
+            const quickApplyButtons = document.querySelectorAll('[data-apply-coupon]');
+            const couponForm = document.querySelector('[data-coupon-form]');
+            const couponInput = couponForm?.querySelector('[data-coupon-input]');
+
+            quickApplyButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const code = btn.dataset.applyCoupon;
+                    if (!code || !couponForm || !couponInput) {
+                        return;
+                    }
+                    couponInput.value = code;
+                    couponForm.submit();
+                });
+            });
         });
     </script>
 }
-

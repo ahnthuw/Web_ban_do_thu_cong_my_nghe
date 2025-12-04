@@ -48,6 +48,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 .Where(p => p.Stock < 10)
                 .Select(p => new InventoryAlertVM
                 {
+                    ProductId = p.Id,
                     ProductName = p.Name,
                     CurrentStock = p.Stock
                 })

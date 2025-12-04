@@ -4,13 +4,17 @@
 @using System.Linq
 @{
     ViewData["Title"] = "Checkout";
-    var shippingOptions = ViewBag.ShippingOptions as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
     var paymentOptions = ViewBag.PaymentOptions as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
     var selectedShipping = ViewBag.SelectedShipping as string ?? string.Empty;
     var selectedPayment = ViewBag.SelectedPayment as string ?? string.Empty;
     var shippingFee = ViewBag.ShippingFee is decimal fee ? fee : 0m;
-    var subtotal = Model.Any() ? Model.Sum(p => p.ThanhTien) : 0m;
-    var total = subtotal + shippingFee;
+    var subtotal = ViewBag.CartSubtotal is decimal sub ? sub : (Model.Any() ? Model.Sum(p => p.ThanhTien) : 0m);
+    var discountAmount = ViewBag.DiscountAmount is decimal dis ? dis : 0m;
+    var taxRate = ViewBag.TaxRate is decimal rate ? rate : 0.1m;
+    var totalBeforeTax = ViewBag.CartTotalBeforeTax is decimal beforeTax ? beforeTax : subtotal - discountAmount + shippingFee;
+    var taxAmount = ViewBag.CartTax is decimal tax ? tax : Math.Round(totalBeforeTax * taxRate, 0, MidpointRounding.AwayFromZero);
+    var totalAfterTax = ViewBag.CartTotal is decimal afterTax ? afterTax : totalBeforeTax + taxAmount;
+    var couponDescription = ViewBag.CouponDescription as string ?? string.Empty;
 }
 @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 <!-- Single Page Header start -->
@@ -33,10 +37,17 @@
                 @ViewBag.EmptyMessage
             </div>
         }
+        @if (ViewBag.CouponMessage is string couponMsg && !string.IsNullOrWhiteSpace(couponMsg))
+        {
+            <div class="alert alert-info" role="alert">
+                @couponMsg
+            </div>
+        }
 
         <form asp-action="Checkout" asp-controller="Cart" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" id="PhiVanChuyen" name="PhiVanChuyen" value="@shippingFee.ToString(CultureInfo.InvariantCulture)" />
+            <input type="hidden" name="PhuongThucVanChuyen" value="@selectedShipping" />
             <div class="row g-5">
                 <div class="col-md-12 col-lg-6 col-xl-6 wow fadeInUp" data-wow-delay="0.1s">
                     <div class="form-check form-switch mb-4">
@@ -70,7 +81,7 @@
                         @foreach (var option in paymentOptions)
                         {
                             string key = option.Key;
-                            string label = option.Label;
+                            string label = option.Value;
                             var inputId = $"payment-{key}";
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="PhuongThucThanhToan" id="@inputId" value="@key" @(selectedPayment.Equals(key, StringComparison.OrdinalIgnoreCase) ? "checked" : null)>
@@ -128,21 +139,14 @@
 
                     <div class="bg-white rounded p-4 mt-4 shadow-sm">
                         <h5 class="mb-4">Vận chuyển</h5>
-                        @foreach (var option in shippingOptions)
-                        {
-                            string key = option.Key;
-                            string label = option.Label;
-                            decimal fee = option.Fee;
-                            var inputId = $"shipping-{key}";
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="PhuongThucVanChuyen" id="@inputId" value="@key" data-fee="@fee.ToString(CultureInfo.InvariantCulture)" @(selectedShipping.Equals(key, StringComparison.OrdinalIgnoreCase) ? "checked" : null)>
-                                <label class="form-check-label" for="@inputId">@label (@fee.ToString("N0") đ)</label>
+                        <p class="text-muted mb-3">Mọi đơn hàng đều áp dụng phí vận chuyển cố định.</p>
+                        <div class="d-flex justify-content-between align-items-center border rounded-3 p-3">
+                            <div>
+                                <span class="fw-semibold">Phí vận chuyển cố định</span>
+                                <div class="small text-muted">Giao hàng toàn quốc</div>
                             </div>
-                        }
-                        @if (!shippingOptions.Any())
-                        {
-                            <div class="alert alert-info">Hiện chưa có phương thức vận chuyển khả dụng.</div>
-                        }
+                            <strong>@shippingFee.ToString("N0") đ</strong>
+                        </div>
                     </div>
 
                     <div class="bg-white rounded p-4 mt-4 shadow-sm">
@@ -151,13 +155,26 @@
                             <span>Tạm tính</span>
                             <strong id="SubtotalDisplay">@subtotal.ToString("N0") đ</strong>
                         </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom text-success @(discountAmount > 0 ? string.Empty : "d-none")" id="DiscountRow">
+                            <span>Giảm giá</span>
+                            <strong id="DiscountDisplay">-@discountAmount.ToString("N0") đ</strong>
+                        </div>
+                        @if (!string.IsNullOrEmpty(couponDescription))
+                        {
+                            <p class="text-success small mb-2">@couponDescription</p>
+                        }
                         <div class="d-flex justify-content-between py-2 border-bottom">
                             <span>Phí vận chuyển</span>
                             <strong id="ShippingFeeDisplay">@shippingFee.ToString("N0") đ</strong>
                         </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>Thuế (@((taxRate * 100m).ToString("0.#"))%)</span>
+                            <strong id="TaxAmountDisplay">@taxAmount.ToString("N0") đ</strong>
+                        </div>
+                        
                         <div class="d-flex justify-content-between py-2">
-                            <span>Tổng cộng</span>
-                            <strong id="OrderTotalDisplay">@total.ToString("N0") đ</strong>
+                            <span>Tổng thanh toán</span>
+                            <strong id="OrderTotalAfterTaxDisplay">@totalAfterTax.ToString("N0") đ</strong>
                         </div>
                     </div>
                 </div>
@@ -173,11 +190,6 @@
         (function () {
             const deliveryToggle = document.getElementById('GiongKhachHang');
             const deliveryFields = document.querySelectorAll('.delivery-info');
-            const shippingRadios = document.querySelectorAll('input[name="PhuongThucVanChuyen"]');
-            const hiddenShippingFee = document.getElementById('PhiVanChuyen');
-            const shippingDisplay = document.getElementById('ShippingFeeDisplay');
-            const totalDisplay = document.getElementById('OrderTotalDisplay');
-            const subtotal = Number('@subtotal.ToString("G", CultureInfo.InvariantCulture)');
 
             if (deliveryToggle) {
                 deliveryToggle.addEventListener('change', function () {
@@ -185,34 +197,6 @@
                         field.classList.toggle('d-none', deliveryToggle.checked);
                     });
                 });
-            }
-
-            function formatCurrency(value) {
-                return value.toLocaleString('vi-VN') + ' đ';
-            }
-
-            function updateTotals(fee) {
-                shippingDisplay.textContent = formatCurrency(fee);
-                totalDisplay.textContent = formatCurrency(subtotal + fee);
-            }
-
-            shippingRadios.forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    const fee = Number(radio.dataset.fee || '0');
-                    hiddenShippingFee.value = fee.toString();
-                    updateTotals(fee);
-                });
-            });
-
-            // Ensure initial total uses selected radio or fallback to hidden field value.
-            const checkedShipping = document.querySelector('input[name="PhuongThucVanChuyen"]:checked');
-            if (checkedShipping) {
-                const initialFee = Number(checkedShipping.dataset.fee || '0');
-                hiddenShippingFee.value = initialFee.toString();
-                updateTotals(initialFee);
-            } else {
-                const initialFee = Number(hiddenShippingFee.value || '0');
-                updateTotals(initialFee);
             }
         })();
     </script>

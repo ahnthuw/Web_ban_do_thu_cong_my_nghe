@@ -1,3 +1,5 @@
+// Trong file: Web_ban_do_thu_cong_my_nghe.Helpers/OrderStatusHelper.cs
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,14 +8,18 @@ namespace Web_ban_do_thu_cong_my_nghe.Helpers;
 public static class OrderStatusHelper
 {
     public const int Pending = 0;
-    public const int Shipping = 1;
-    public const int Completed = 2;
+    public const int Confirmed = 10; // THÊM TRẠNG THÁI MỚI: Đã xác nhận
+    public const int Shipping = 20;  // Thay đổi giá trị để chèn Confirmed
+    public const int Completed = 30;
+    public const int Cancelled = 40; // THÊM TRẠNG THÁI MỚI: Đã hủy
 
     private static readonly IReadOnlyDictionary<int, string> StatusLabels = new Dictionary<int, string>
     {
-        { Pending, "Chờ xác nhận" },
+        { Pending, "Chờ xử lý" },        // Đổi "Chờ xác nhận" thành "Chờ xử lý"
+        { Confirmed, "Đã xác nhận" },    // THÊM: Label mới
         { Shipping, "Đang giao hàng" },
-        { Completed, "Đã hoàn thành" }
+        { Completed, "Đã hoàn thành" },
+        { Cancelled, "Đã hủy" }         // THÊM: Label mới
     };
 
     public static IReadOnlyDictionary<int, string> AllStatuses => StatusLabels;
@@ -38,6 +44,7 @@ public static class OrderStatusHelper
         ? status.Value
         : Pending;
 
+    // Giữ nguyên các hàm còn lại
     public static string GetStatusText(int status) => GetLabel(status);
 
     public static string GetStatusText(int? status) => GetLabel(status);
@@ -45,8 +52,10 @@ public static class OrderStatusHelper
     public static string GetStatusClass(int status) => status switch
     {
         Pending => "badge-warning",
+        Confirmed => "badge-primary", // Thêm class mới cho Confirmed
         Shipping => "badge-info",
         Completed => "badge-success",
+        Cancelled => "badge-danger",  // Thêm class mới cho Cancelled
         _ => "badge-secondary"
     };
 

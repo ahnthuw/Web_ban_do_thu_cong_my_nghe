@@ -1,0 +1,74 @@
+@model Web_ban_do_thu_cong_my_nghe.ViewModels.DiscountCodeCreateVM
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Tạo mã giảm giá";
+}
+
+<section class="admin-card p-4">
+    <div class="mb-4">
+        <h1 class="h3">Tạo mã giảm giá mới</h1>
+        <p class="text-muted mb-0">Điền thông tin mã ưu đãi dành cho khách hàng.</p>
+    </div>
+
+    <form asp-action="Create" method="post" class="row g-3">
+        @Html.AntiForgeryToken()
+        <div class="col-md-6">
+            <label asp-for="Code" class="form-label"></label>
+            <input asp-for="Code" class="form-control text-uppercase" />
+            <span asp-validation-for="Code" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Description" class="form-label"></label>
+            <input asp-for="Description" class="form-control" />
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PercentOff" class="form-label"></label>
+            <div class="input-group">
+                <input asp-for="PercentOff" class="form-control" />
+                <span class="input-group-text">%</span>
+            </div>
+            <span asp-validation-for="PercentOff" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="AmountOff" class="form-label"></label>
+            <div class="input-group">
+                <input asp-for="AmountOff" class="form-control" />
+                <span class="input-group-text">đ</span>
+            </div>
+            <span asp-validation-for="AmountOff" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="MinOrderValue" class="form-label"></label>
+            <div class="input-group">
+                <input asp-for="MinOrderValue" class="form-control" />
+                <span class="input-group-text">đ</span>
+            </div>
+            <span asp-validation-for="MinOrderValue" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" class="form-control" type="date" />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" class="form-control" type="date" />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="UsageLimit" class="form-label"></label>
+            <input asp-for="UsageLimit" class="form-control" />
+            <span asp-validation-for="UsageLimit" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 d-flex gap-3 mt-3">
+            <button type="submit" class="btn btn-primary px-4">Lưu mã</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

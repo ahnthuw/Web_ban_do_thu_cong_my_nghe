@@ -1,0 +1,76 @@
+@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.User>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    ViewData["Subtitle"] = "Danh sách tài khoản";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h4 class="mb-0">Danh sách người dùng</h4>
+            <p class="text-muted mb-0">Theo dõi tài khoản, phân quyền và trạng thái hoạt động.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-success" asp-action="Dashboard">
+                <i class="fa fa-chart-line me-2"></i>Quay về Dashboard
+            </a>
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-primary">Xem thống kê</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Chưa có người dùng nào.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Id</td>
+                                <td>@user.TenDangNhap</td>
+                                <td>@user.Fullname</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <span class="badge @(string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase) ? "bg-light text-danger border border-danger" : string.Equals(user.Role, "Staff", StringComparison.OrdinalIgnoreCase) ? "bg-light text-success border border-success" : "bg-light text-secondary border border-secondary")">
+                                        @(string.IsNullOrWhiteSpace(user.Role) ? "Chưa phân" : user.Role)
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (user.Status)
+                                    {
+                                        <span class="text-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Tạm khóa</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="EditRole" asp-route-id="@user.Id" class="btn btn-sm btn-primary">Phân quyền</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

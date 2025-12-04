@@ -1,79 +1,343 @@
-@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.Order>
+@using System.Linq
+@using Microsoft.AspNetCore.Mvc.Rendering
 @using Web_ban_do_thu_cong_my_nghe.Helpers
+@using Web_ban_do_thu_cong_my_nghe.Data
+@model IEnumerable<Order>
 
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    ViewData["Title"] = "Lịch sử đơn hàng";
-    ViewData["Subtitle"] = "Theo dõi trạng thái và cập nhật giao hàng";
-    var statusOptions = (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<int, string>>)ViewBag.StatusOptions
-        ?? OrderStatusHelper.AllStatuses;
+    var allStatuses = OrderStatusHelper.AllStatuses;
+
+    // Trạng thái mặc định nếu Order.Status là null
+    const int DefaultStatus = OrderStatusHelper.Pending;
+    var totalOrders = Model.Count();
+    var statusCounts = Model
+        .GroupBy(o => o.Status ?? DefaultStatus)
+        .ToDictionary(g => g.Key, g => g.Count());
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Lịch sử đơn hàng</h1>
-        <p class="page-subtitle">Danh sách toàn bộ đơn và tình trạng xử lý</p>
+<style>
+    /* CSS CẬP NHẬT */
+    .order-history-shell {
+        /* Giữ nguyên background và shadow để tạo độ nổi bật */
+        background: linear-gradient(160deg, rgba(240, 130, 27, 0.08), rgba(240, 130, 27, 0.02));
+        border-radius: 12px; /* Giảm nhẹ border radius cho vẻ ngoài hiện đại hơn */
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px; /* Thêm khoảng cách dưới tiêu đề */
+    }
+
+        .order-history-header h1 { /* Thay h2 bằng h1 cho tiêu đề chính */
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333; /* Màu tối hơn */
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-history-header .header-title-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+    .header-title-wrapper span {
+        font-size: 0.9rem;
+        color: #999;
+    }
+
+    .order-filter-bar {
+        margin: 10px 0 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px; /* Giảm khoảng cách giữa các pill */
+        align-items: center;
+    }
+
+    .filter-pill {
+        border: none;
+        background: #f7f7f7; /* Nền nhẹ cho pill không active */
+        color: #555;
+        padding: 6px 14px; /* Giảm padding */
+        border-radius: 8px; /* Giảm border radius */
+        font-weight: 500;
+        transition: 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+        /* Active/Hover color - Tông màu cam chủ đạo */
+        .filter-pill.active,
+        .filter-pill:hover {
+            background: #F0821B; /* Màu cam đậm hơn */
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(240, 130, 27, 0.4);
+        }
+
+    .order-panel {
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #eee; /* Đường viền nhẹ */
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+        .order-panel table thead {
+            background: rgba(240, 130, 27, 0.1); /* Nền cam nhạt cho header */
+            border-bottom: 1px solid rgba(240, 130, 27, 0.2);
+        }
+
+        .order-panel th {
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            color: #333; /* Màu chữ tối */
+            font-weight: 600;
+            padding: 12px 15px;
+        }
+
+        .order-panel td {
+            padding: 12px 15px;
+            font-size: 0.9rem;
+        }
+
+    /* Định dạng badge trạng thái */
+    .status-badge {
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: inline-block;
+        min-width: 80px; /* Độ rộng tối thiểu cho gọn */
+        text-align: center;
+    }
+
+    /* Màu sắc theo trạng thái */
+    .status-pending { /* Chờ xử lý: Màu vàng cam */
+        background: #FFECB3;
+        color: #FFB300;
+    }
+
+    .status-confirmed { /* Đã xác nhận/Đang xử lý: Màu xanh dương nhạt */
+        background: #B3E5FC;
+        color: #03A9F4;
+    }
+
+    .status-shipping { /* Đang giao hàng: Màu xanh dương đậm hơn */
+        background: #E1F5FE;
+        color: #00897B;
+    }
+
+    .status-completed { /* Hoàn thành: Màu xanh lá */
+        background: #C8E6C9;
+        color: #4CAF50;
+    }
+
+    .status-cancelled { /* Đã hủy: Màu đỏ/xám */
+        background: #FFCDD2;
+        color: #F44336;
+    }
+
+    .order-action-wrapper {
+        display: flex;
+        gap: 6px; /* Giảm khoảng cách giữa các nút */
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-end; /* Căn phải */
+    }
+
+    .order-status-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+        .order-status-form select {
+            min-width: 140px; /* Cố định chiều rộng cho gọn */
+            border-radius: 6px;
+            border-color: #ddd;
+            font-size: 0.85rem;
+            padding: 5px 10px;
+            height: auto; /* Tự động chiều cao */
+        }
+
+        /* Nút Cập nhật */
+        .order-status-form button {
+            background: #28a745; /* Màu xanh lá (Update) */
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s ease;
+        }
+
+            .order-status-form button:hover {
+                background: #1e7e34;
+            }
+
+    /* Nút Xem chi tiết */
+    .btn-link-detail {
+        background: #17a2b8; /* Màu xanh dương (Info) */
+        border: none;
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+
+        .btn-link-detail:hover {
+            background: #138496;
+        }
+
+    /* Sửa font-size cho số tiền */
+    .total-money {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    /* Responsive */
+    @@media (max-width: 991.98px) {
+        .order-action-wrapper {
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .order-status-form {
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+        }
+
+            .order-status-form select, .order-status-form button {
+                width: 100%;
+                min-width: unset;
+            }
+
+        .order-panel td, .order-panel th {
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<section class="order-history-shell">
+    <div class="order-history-header">
+        <h1 class="text-primary-dark">
+            <i class="fas fa-box-open"></i> Quản lý đơn hàng
+        </h1>
+        <a class="btn btn-success" asp-action="Dashboard">
+            <i class="fa fa-chart-line me-2"></i>Quay về Dashboard
+        </a>
     </div>
-</div>
 
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-success admin-flash">@statusMessage</div>
-}
+    <div class="order-filter-bar">
+        <span class="fw-semibold text-muted">Lọc theo trạng thái:</span>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="filter-pill active" data-status="all">Tất cả (@totalOrders)</button>
 
-@if (!Model.Any())
-{
-    <div class="alert alert-info">Chưa có đơn hàng nào.</div>
-}
-else
-{
-    <div class="panel">
-        <div class="panel-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Tổng số: @Model.Count() đơn</h4>
+            @foreach (var status in allStatuses)
+            {
+                // Logic để gán Class màu sắc cho Filter Pill
+                var pillClass = status.Key switch
+                {
+                    OrderStatusHelper.Pending => "filter-pill filter-pending",
+                    OrderStatusHelper.Confirmed => "filter-pill filter-confirmed",
+                    OrderStatusHelper.Shipping => "filter-pill filter-shipping",
+                    OrderStatusHelper.Completed => "filter-pill filter-completed",
+                    OrderStatusHelper.Cancelled => "filter-pill filter-cancelled",
+                    _ => "filter-pill"
+                };
+
+                statusCounts.TryGetValue(status.Key, out var count);
+
+                <button type="button" class="@pillClass" data-status="@status.Key">
+                    @status.Value (@count)
+                </button>
+            }
         </div>
-        <div class="table-responsive mt-3">
-            <table class="table table-hover">
+    </div>
+
+    <div class="order-panel">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover">
                 <thead>
                     <tr>
                         <th>Mã đơn</th>
-                        <th>Khách hàng</th>
                         <th>Ngày đặt</th>
-                        <th>Trạng thái</th>
+                        <th>Khách hàng</th>
+                        <th>Số điện thoại</th>
                         <th>Tổng tiền</th>
-                        <th>Điện thoại</th>
-                        <th>Địa chỉ giao</th>
-                        <th>Ghi chú</th>
-                        <th>Cập nhật</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var order in Model)
                     {
-                        <tr>
-                            <td>#@order.Id</td>
-                            <td>@(order.User?.Fullname ?? "-")</td>
-                            <td>@(order.OrderDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                        var statusKey = order.Status ?? DefaultStatus;
+
+                        // Logic để gán Class màu sắc cho Status Badge
+                        var badgeClass = statusKey switch
+                        {
+                            OrderStatusHelper.Pending => "status-badge status-pending",
+                            OrderStatusHelper.Confirmed => "status-badge status-confirmed",
+                            OrderStatusHelper.Shipping => "status-badge status-shipping",
+                            OrderStatusHelper.Completed => "status-badge status-completed",
+                            OrderStatusHelper.Cancelled => "status-badge status-cancelled",
+                            _ => "status-badge status-pending"
+                        };
+
+                        // Tạo danh sách SelectListItem cho Dropdown trạng thái
+                        var statusList = allStatuses
+                        .Select(option => new SelectListItem
+                {
+                    Value = option.Key.ToString(),
+                    Text = option.Value,
+                    Selected = option.Key == statusKey
+                })
+                        .ToList();
+
+                        <tr data-order-row data-status="@statusKey" data-order-id="@order.Id" id="order-@order.Id">
                             <td>
-                                <span class="status-badge @OrderStatusHelper.GetStatusClass(order.Status)">
-                                    @OrderStatusHelper.GetStatusText(order.Status)
-                                </span>
+                                <a asp-controller="AdminOrder" asp-action="Index" asp-route-highlight="@order.Id" class="fw-semibold text-decoration-none text-dark">
+                                    #@order.Id
+                                </a>
                             </td>
-                            <td>@order.TotalMoney.ToString("N0")</td>
+                            <td>@(order.OrderDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                            <td>@(order.User?.Fullname ?? "Khách lẻ")</td>
                             <td>@order.ShippingPhone</td>
-                            <td>@order.ShippingAddress</td>
-                            <td>@order.Notes</td>
+                            <td class="total-money text-danger">@order.TotalMoney.ToString("N0") đ</td>
                             <td>
-                                <form asp-action="CapNhatTrangThai" asp-controller="Admin" method="post" class="status-inline-form">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@order.Id" />
-                                    <select name="status" class="form-select">
-                                        @foreach (var status in statusOptions)
-                                        {
-                                            <option value="@status.Key" selected="@(order.Status == status.Key)">@status.Value</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-primary">Lưu</button>
-                                </form>
+                                <span class="@badgeClass">@OrderStatusHelper.GetLabel(order.Status)</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="order-action-wrapper">
+                                    <form class="order-status-form" asp-controller="Admin" asp-action="CapNhatTrangThai" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@order.Id" />
+                                        <select class="form-select form-select-sm" name="status" asp-items="statusList"></select>
+                                        <button type="submit">Cập nhật</button>
+                                    </form>
+                                    <a class="btn-link-detail" asp-controller="AdminOrder" asp-action="Detail" asp-route-id="@order.Id">
+                                        Xem chi tiết
+                                    </a>
+                                    <a class="btn-link-detail" asp-controller="AdminOrder" asp-action="Invoice" asp-route-id="@order.Id">
+                                        Xem hóa đơn
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -81,4 +345,45 @@ else
             </table>
         </div>
     </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const pills = document.querySelectorAll('.filter-pill');
+            const rows = document.querySelectorAll('[data-order-row]');
+
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+
+                    const targetStatus = pill.dataset.status;
+
+                    rows.forEach(row => {
+                        const rowStatus = row.dataset.status;
+                        // Ẩn/hiện row dựa trên trạng thái
+                        const match = targetStatus === 'all' || rowStatus === targetStatus;
+
+                        // Sử dụng class Bootstrap d-none (display: none !important)
+                        row.classList.toggle('d-none', !match);
+                    });
+                });
+            });
+
+            // Highlight hàng nếu có tham số highlight trên URL (ví dụ: sau khi cập nhật)
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightId = urlParams.get('highlight');
+            if (highlightId) {
+                const targetRow = document.querySelector(`[data-order-id="${highlightId}"]`).closest('tr');
+                if (targetRow) {
+                    targetRow.style.boxShadow = '0 0 10px rgba(240, 130, 27, 0.6)';
+                    targetRow.style.transition = 'box-shadow 0.5s ease';
+                    setTimeout(() => {
+                        targetRow.style.boxShadow = 'none';
+                    }, 3000); // Bỏ highlight sau 3 giây
+                }
+            }
+        })();
+    </script>
 }

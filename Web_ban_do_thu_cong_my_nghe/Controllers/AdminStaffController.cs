@@ -17,9 +17,13 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var staff = await _db.NhanViens.OrderBy(nv => nv.HoTen).ToListAsync();
+            var staff = await _db.Users
+                .Where(u => u.Role != null && u.Role.Trim().ToLower() == "staff")
+                .OrderBy(u => u.Fullname)
+                .ToListAsync();
+
             ViewData["Title"] = "Nhân viên";
-            ViewData["Subtitle"] = "Theo dõi thông tin và phân quyền nhân sự";
+            ViewData["Subtitle"] = "Theo dõi tài khoản thuộc nhóm Staff";
             return View(staff);
         }
 

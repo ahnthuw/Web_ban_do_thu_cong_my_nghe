@@ -1,85 +1,421 @@
+@using System.Linq
 @model Web_ban_do_thu_cong_my_nghe.ViewModels.AdminReportVM
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    var avgOrderValue = Model.TotalOrders == 0 ? 0 : Model.TotalRevenue / Model.TotalOrders;
+    var revenuePerCustomer = Model.TotalCustomers == 0 ? 0 : Model.TotalRevenue / Model.TotalCustomers;
+    var hasRevenuePoints = Model.RevenuePoints != null && Model.RevenuePoints.Any();
+    var maxRevenuePoint = hasRevenuePoints ? Model.RevenuePoints.Max(p => p.Value) : 0;
+    var peakPoint = hasRevenuePoints ? Model.RevenuePoints.OrderByDescending(p => p.Value).First() : null;
+    var topProduct = Model.TopProducts?.FirstOrDefault();
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Báo cáo & thống kê</h1>
-        <p class="page-subtitle">Theo dõi tăng trưởng doanh thu, sản phẩm nổi bật và cảnh báo tồn kho</p>
-    </div>
-    <div class="header-actions">
-        <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-link">← Dashboard</a>
-    </div>
-</div>
+<style>
+    .report-wrapper {
+        background: radial-gradient(circle at top right, rgba(255, 181, 121, 0.25), transparent 45%),
+                    linear-gradient(130deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.95));
+        border-radius: 24px;
+        padding: 32px;
+        border: 1px solid rgba(240, 130, 27, 0.2);
+        box-shadow: 0 25px 60px rgba(30, 30, 30, 0.08);
+    }
 
-<div class="grid grid-3">
-    <div class="kpi-card">
-        <p class="kpi-label">Tổng đơn hàng</p>
-        <h3 class="kpi-value">@Model.TotalOrders</h3>
-    </div>
-    <div class="kpi-card">
-        <p class="kpi-label">Tổng khách hàng</p>
-        <h3 class="kpi-value">@Model.TotalCustomers</h3>
-    </div>
-    <div class="kpi-card">
-        <p class="kpi-label">Tổng doanh thu</p>
-        <h3 class="kpi-value">@Model.TotalRevenue.ToString("N0") ₫</h3>
-    </div>
-</div>
+    .report-header h1 {
+        font-weight: 700;
+    }
 
-<div class="panel mt-4">
-    <h4>Doanh thu theo ngày</h4>
-    <div class="chart">
-        @foreach (var point in Model.RevenuePoints)
-        {
-            <div class="chart-row">
-                <span class="chart-label">@point.Label</span>
-                <div class="chart-bar">
-                    <div class="chart-fill" style="width:@(Math.Min(100, point.Value / (Model.TotalRevenue == 0 ? 1 : Model.TotalRevenue) * 100))%"></div>
+    .report-actions .btn {
+        border-radius: 999px;
+        padding-inline: 22px;
+    }
+
+    .report-metric-card {
+        position: relative;
+        background: #fff;
+        border-radius: 18px;
+        padding: 22px;
+        border: 1px solid rgba(240, 130, 27, 0.1);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
+    }
+
+    .report-metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.07);
+    }
+
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+        color: #fff;
+        background: linear-gradient(135deg, #ffb168, #f0821b);
+    }
+
+    .metric-label {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: #a4a4a4;
+        margin-bottom: 6px;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f0821b;
+        margin-bottom: 2px;
+    }
+
+    .metric-subtext {
+        color: #7a7a7a;
+        font-size: 0.9rem;
+    }
+
+    .report-panel {
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.04);
+        height: 100%;
+    }
+
+    .panel-title {
+        font-weight: 600;
+        color: #1f1f1f;
+    }
+
+    .trend-grid {
+        margin-top: 16px;
+    }
+
+    .trend-row {
+        display: grid;
+        grid-template-columns: 100px 1fr 120px;
+        gap: 14px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+    }
+
+    .trend-row:last-child {
+        border-bottom: none;
+    }
+
+    .trend-bar {
+        height: 12px;
+        background: #f4f4f4;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .trend-fill {
+        height: 100%;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #ffb168, #f0821b);
+    }
+
+    .trend-value {
+        font-weight: 600;
+        color: #3f3f3f;
+    }
+
+    .highlight-card {
+        background: linear-gradient(130deg, #fff5ec, #ffe6cf);
+        border-radius: 18px;
+        padding: 20px;
+        border: 1px solid rgba(240, 130, 27, 0.3);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+
+    .highlight-card strong {
+        font-size: 1.1rem;
+        color: #c4590a;
+    }
+
+    .list-card ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .list-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-item strong {
+        color: #f0821b;
+    }
+
+    .badge-soft-warning {
+        background: rgba(255, 193, 7, 0.15);
+        color: #a87400;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .restock-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #a85600;
+        text-decoration: none;
+        background: linear-gradient(120deg, #ffe8c7, #ffc27c);
+        border: 1px solid rgba(240, 130, 27, 0.35);
+        box-shadow: 0 8px 18px rgba(240, 130, 27, 0.2);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+    }
+
+    .restock-btn:hover {
+        color: #fff;
+        background: linear-gradient(120deg, #f6a354, #f0821b);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(240, 130, 27, 0.35);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 24px 12px;
+        color: #9f9f9f;
+        font-style: italic;
+    }
+
+    @@media (max-width: 992px) {
+        .report-wrapper {
+            padding: 20px;
+        }
+
+        .trend-row {
+            grid-template-columns: 80px 1fr 100px;
+        }
+    }
+</style>
+
+<section class="report-wrapper">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 report-header mb-4">
+        <div>
+            <span class="text-uppercase text-muted small">Admin insight</span>
+            <h1 class="h3 mb-1">Báo cáo & thống kê</h1>
+            <p class="text-muted mb-0">Theo dõi hiệu suất kinh doanh, sản phẩm nổi bật và cảnh báo tồn kho theo thời gian thực</p>
+        </div>
+        <div class="report-actions d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-controller="AdminReport" asp-action="Index">
+                <i class="fa fa-rotate-right me-2"></i>Làm mới
+            </a>
+            <a class="btn btn-success" asp-controller="Admin" asp-action="Dashboard">
+                <i class="fa fa-chart-line me-2"></i>Quay về Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-coins"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Tổng doanh thu</p>
+                    <p class="metric-value mb-0">@Model.TotalRevenue.ToString("N0") ₫</p>
+                    <small class="metric-subtext">Tính theo giai đoạn hiện tại</small>
                 </div>
-                <span class="chart-value">@point.Value.ToString("N0") ₫</span>
             </div>
-        }
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-receipt"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Tổng đơn hàng</p>
+                    <p class="metric-value mb-0">@Model.TotalOrders</p>
+                    <small class="metric-subtext">Bình quân: @avgOrderValue.ToString("N0") ₫/đơn</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-users"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Khách hàng</p>
+                    <p class="metric-value mb-0">@Model.TotalCustomers</p>
+                    <small class="metric-subtext">Doanh thu: @revenuePerCustomer.ToString("N0") ₫/khách</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-fire"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Ngày cao điểm</p>
+                    @if (peakPoint != null)
+                    {
+                        <p class="metric-value mb-0">@peakPoint.Value.ToString("N0") ₫</p>
+                        <small class="metric-subtext">@peakPoint.Label</small>
+                    }
+                    else
+                    {
+                        <p class="metric-value mb-0">0 ₫</p>
+                        <small class="metric-subtext">Chưa có dữ liệu</small>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="grid grid-2 mt-4">
-    <div class="panel">
-        <h4>Top sản phẩm bán chạy</h4>
-        <ul class="list">
-            @foreach (var product in Model.TopProducts)
-            {
-                <li class="list-item">
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="report-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
-                        <p class="list-title">@product.Name</p>
-                        <p class="list-subtitle">@product.UnitsSold sản phẩm</p>
+                        <p class="text-uppercase small text-muted mb-1">Doanh thu</p>
+                        <h4 class="panel-title mb-0">Biểu đồ theo ngày</h4>
                     </div>
-                    <strong>@product.Revenue.ToString("N0") ₫</strong>
-                </li>
-            }
-        </ul>
-    </div>
-    <div class="panel">
-        <h4>Cảnh báo tồn kho</h4>
-        @if (!Model.InventoryAlerts.Any())
-        {
-            <p class="text-muted">Không có sản phẩm nào dưới ngưỡng 10.</p>
-        }
-        else
-        {
-            <ul class="list">
-                @foreach (var alert in Model.InventoryAlerts)
+                    @if (peakPoint != null)
+                    {
+                        <span class="badge bg-warning text-dark">Đỉnh: @peakPoint.Label</span>
+                    }
+                </div>
+                @if (!hasRevenuePoints)
                 {
-                    <li class="list-item">
-                        <div>
-                            <p class="list-title">@alert.ProductName</p>
-                            <p class="list-subtitle">Tồn kho: @alert.CurrentStock</p>
-                        </div>
-                        <span class="badge badge-warning">Bổ sung</span>
-                    </li>
+                    <div class="empty-state">Chưa có dữ liệu doanh thu để hiển thị biểu đồ.</div>
                 }
-            </ul>
-        }
+                else
+                {
+                    <div class="trend-grid">
+                        @foreach (var point in Model.RevenuePoints)
+                        {
+                            var width = maxRevenuePoint == 0 ? 0 : Math.Round(point.Value / maxRevenuePoint * 100, 0);
+                            <div class="trend-row">
+                                <span class="text-muted">@point.Label</span>
+                                <div class="trend-bar">
+                                    <div class="trend-fill" style="width:@width%"></div>
+                                </div>
+                                <span class="trend-value">@point.Value.ToString("N0") ₫</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="report-panel h-100 d-flex flex-column justify-content-between">
+                <div class="highlight-card mb-3">
+                    <p class="text-uppercase small text-muted mb-1">Sản phẩm nổi bật</p>
+                    @if (topProduct != null)
+                    {
+                        <strong>@topProduct.Name</strong>
+                        <p class="mb-1 text-muted">Đã bán: @topProduct.UnitsSold • Doanh thu: @topProduct.Revenue.ToString("N0") ₫</p>
+                        <span class="badge bg-white text-warning border">Tồn kho: @topProduct.Stock</span>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-muted">Chưa có dữ liệu sản phẩm bán chạy.</p>
+                    }
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Mức đặt hàng trung bình</span>
+                        <strong>@avgOrderValue.ToString("N0") ₫</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Tỉ lệ khách hàng mua</span>
+                        <strong>@(Model.TotalCustomers == 0 ? 0 : Math.Round((decimal)Model.TotalOrders / Model.TotalCustomers, 1)) đơn/khách</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Sản phẩm cần bổ sung</span>
+                        <strong>@Model.InventoryAlerts.Count</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="report-panel list-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase small text-muted mb-1">Bán chạy</p>
+                        <h4 class="panel-title mb-0">Top sản phẩm</h4>
+                    </div>
+                    <span class="badge bg-light text-dark border">@Model.TopProducts.Count sản phẩm</span>
+                </div>
+                @if (Model.TopProducts != null && Model.TopProducts.Any())
+                {
+                    <ul>
+                        @foreach (var product in Model.TopProducts)
+                        {
+                            <li class="list-item">
+                                <div>
+                                    <strong>@product.Name</strong>
+                                    <p class="text-muted mb-0">Đã bán: @product.UnitsSold • Tồn kho: @product.Stock</p>
+                                </div>
+                                <span>@product.Revenue.ToString("N0") ₫</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="empty-state">Chưa có dữ liệu sản phẩm bán chạy.</div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="report-panel list-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase small text-muted mb-1">Kho vận</p>
+                        <h4 class="panel-title mb-0">Cảnh báo tồn kho</h4>
+                    </div>
+                    <span class="badge bg-light text-dark border">Ngưỡng <strong>10</strong></span>
+                </div>
+                @if (!Model.InventoryAlerts.Any())
+                {
+                    <div class="empty-state">Kho đang ổn định, chưa cần bổ sung.</div>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var alert in Model.InventoryAlerts)
+                        {
+                            <li class="list-item">
+                                <div>
+                                    <strong>@alert.ProductName</strong>
+                                    <p class="text-muted mb-0">Tồn kho: @alert.CurrentStock / Ngưỡng: @alert.Threshold</p>
+                                </div>
+                                @if (alert.ProductId > 0)
+                                {
+                                    <a class="restock-btn" asp-controller="AdminProduct" asp-action="Edit" asp-route-id="@alert.ProductId">
+                                        <i class="fa fa-boxes-stacked"></i>
+                                        Bổ sung
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft-warning">Bổ sung</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</section>

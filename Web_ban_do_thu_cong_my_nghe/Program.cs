@@ -27,6 +27,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 var app = builder.Build();
 
+await DatabaseBootstrapper.EnsureDiscountCodesSchemaAsync(app.Services);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -46,7 +48,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "admin",
-    pattern: "Admin/{action=Login}/{id?}",
+    pattern: "Admin/{action=Index}/{id?}",
     defaults: new { controller = "Admin" });
 
 app.MapControllerRoute(

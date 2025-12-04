@@ -1,0 +1,109 @@
+@using Web_ban_do_thu_cong_my_nghe.Data
+@using Web_ban_do_thu_cong_my_nghe.Helpers
+@model Order
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    var statusLabel = OrderStatusHelper.GetLabel(Model.Status);
+    var statusClass = OrderStatusHelper.GetStatusClass(Model.Status);
+}
+
+<section class="order-detail-shell">
+    <div class="order-detail-header">
+        <div>
+            <p class="text-muted mb-1">Quản lý đơn hàng</p>
+            <h1 class="mb-0">Đơn hàng #@Model.Id</h1>
+        </div>
+        <a class="btn btn-outline-primary" asp-action="Index">
+            ← Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="order-info-card">
+                <p class="text-muted mb-1">Trạng thái</p>
+                <span class="badge @statusClass">@statusLabel</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="order-info-card">
+                <p class="text-muted mb-1">Ngày đặt</p>
+                <h5 class="mb-0">@Model.OrderDate?.ToString("dd/MM/yyyy")</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="order-info-card">
+                <p class="text-muted mb-1">Tổng tiền</p>
+                <h5 class="mb-0 text-danger">@Model.TotalMoney.ToString("N0") đ</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="order-info-card">
+                <p class="text-muted mb-1">Khách hàng</p>
+                <h5 class="mb-0">@Model.User?.Fullname ?? "Khách lẻ"</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="order-info-card">
+                <h5>Thông tin giao hàng</h5>
+                <p class="mb-1">@Model.ShippingAddress</p>
+                <p class="mb-0">Điện thoại: <strong>@Model.ShippingPhone</strong></p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="order-info-card">
+                <h5>Ghi chú</h5>
+                <p class="mb-0">@(!string.IsNullOrWhiteSpace(Model.Notes) ? Model.Notes : "Không có")</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="order-detail-panel">
+        <h4 class="mb-3">Danh sách sản phẩm</h4>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th class="text-center">SL</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.OrderDetails == null || !Model.OrderDetails.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Chưa có chi tiết đơn hàng.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var detail in Model.OrderDetails)
+                        {
+                            var lineTotal = detail.PriceAtPurchase * detail.Quantity;
+                            <tr>
+                                <td>
+                                    <strong>@detail.Product?.Name ?? "Sản phẩm"</strong>
+                                </td>
+                                <td class="text-center">@detail.Quantity</td>
+                                <td class="text-end">@detail.PriceAtPurchase.ToString("N0") đ</td>
+                                <td class="text-end">@lineTotal.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<style>
+    .order-detail-shell { padding: 24px; border-radius: 18px; background: #fff; box-shadow: 0 18px 40px rgba(0,0,0,0.05); }
+    .order-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .order-info-card { background: rgba(240,130,27,0.08); border-radius: 12px; padding: 16px; height: 100%; }
+    .order-detail-panel { border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 20px; background: #fff; box-shadow: 0 10px 24px rgba(17,24,39,0.06); }
+</style>

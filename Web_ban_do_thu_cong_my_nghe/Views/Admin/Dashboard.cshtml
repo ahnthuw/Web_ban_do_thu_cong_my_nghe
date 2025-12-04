@@ -6,76 +6,46 @@
 }
 
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Tổng khách hàng</p>
-                <h3 class="fw-bold">@Model.CustomerCount</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Nhân viên</p>
-                <h3 class="fw-bold">@Model.StaffCount</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Tổng đơn hàng</p>
-                <h3 class="fw-bold">@Model.TotalOrders</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Doanh thu tích luỹ</p>
-                <h3 class="fw-bold text-primary">@Model.TotalRevenue.ToString("N0") đ</h3>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">Doanh thu hôm nay</p>
-                        <h3 class="fw-bold">@Model.RevenueToday.ToString("N0") đ</h3>
-                    </div>
-                    <span class="badge bg-primary">Ngày</span>
+    <div class="col-xl-3 col-md-6">
+        <div class="card insight-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="insight-icon bg-primary-subtle text-primary"><i class="fa fa-users"></i></span>
+                <div>
+                    <p class="text-muted mb-1">Tổng khách hàng</p>
+                    <h3 class="fw-bold mb-0">@Model.CustomerCount</h3>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">Doanh thu tháng</p>
-                        <h3 class="fw-bold">@Model.RevenueThisMonth.ToString("N0") đ</h3>
-                    </div>
-                    <span class="badge bg-secondary">Tháng</span>
+    <div class="col-xl-3 col-md-6">
+        <div class="card insight-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="insight-icon bg-success-subtle text-success"><i class="fa fa-user-tie"></i></span>
+                <div>
+                    <p class="text-muted mb-1">Nhân viên hoạt động</p>
+                    <h3 class="fw-bold mb-0">@Model.StaffCount</h3>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">Doanh thu năm</p>
-                        <h3 class="fw-bold">@Model.RevenueThisYear.ToString("N0") đ</h3>
-                    </div>
-                    <span class="badge bg-primary text-white" style="background: linear-gradient(135deg, var(--bs-primary), var(--bs-secondary));">Năm</span>
+    <div class="col-xl-3 col-md-6">
+        <div class="card insight-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="insight-icon bg-warning-subtle text-warning"><i class="fa fa-receipt"></i></span>
+                <div>
+                    <p class="text-muted mb-1">Tổng đơn hàng</p>
+                    <h3 class="fw-bold mb-0">@Model.TotalOrders</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card insight-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="insight-icon bg-danger-subtle text-danger"><i class="fa fa-coins"></i></span>
+                <div>
+                    <p class="text-muted mb-1">Doanh thu tích luỹ</p>
+                    <h3 class="fw-bold mb-0">@Model.TotalRevenue.ToString("N0") đ</h3>
                 </div>
             </div>
         </div>
@@ -83,36 +53,93 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Sản phẩm</p>
-                <h3 class="fw-bold">@Model.ProductCount</h3>
-                <p class="mb-0 small text-muted">Danh mục: @Model.CategoryCount</p>
+    <div class="col-xxl-8">
+        <div class="card metric-panel h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Thống kê doanh thu</strong>
+                <span class="badge bg-light text-primary border">Cập nhật @DateTime.Now.ToString("HH:mm dd/MM")</span>
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <p class="text-muted mb-1">Tồn kho</p>
-                <h3 class="fw-bold">@Model.InventoryInStock</h3>
-                <p class="mb-0 small text-muted">Đã bán: @Model.UnitsSold</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-1">Đơn hàng</p>
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <strong>@Model.PendingOrders</strong>
-                        <p class="small text-muted mb-0">Chờ xác nhận</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="stat-tile">
+                            <p class="text-muted mb-1">Hôm nay</p>
+                            <h4 class="fw-bold">@Model.RevenueToday.ToString("N0") đ</h4>
+                            <span class="badge bg-primary text-white">Ngày</span>
+                        </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="stat-tile">
+                            <p class="text-muted mb-1">Trong tháng</p>
+                            <h4 class="fw-bold">@Model.RevenueThisMonth.ToString("N0") đ</h4>
+                            <span class="badge bg-warning text-dark">Tháng</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-tile">
+                            <p class="text-muted mb-1">Trong năm</p>
+                            <h4 class="fw-bold">@Model.RevenueThisYear.ToString("N0") đ</h4>
+                            <span class="badge bg-danger text-white">Năm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <div class="stat-mini">
+                            <small class="text-muted">Sản phẩm</small>
+                            <h5 class="mb-0">@Model.ProductCount</h5>
+                            <span class="text-muted">Danh mục: @Model.CategoryCount</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-mini">
+                            <small class="text-muted">Tồn kho</small>
+                            <h5 class="mb-0">@Model.InventoryInStock</h5>
+                            <span class="text-muted">Đã bán: @Model.UnitsSold</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-mini">
+                            <small class="text-muted">Khách hàng thân thiết</small>
+                            <h5 class="mb-0">@Model.CustomerCount</h5>
+                            <span class="text-muted">Đang phục vụ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl-4">
+        <div class="card pipeline-card h-100">
+            <div class="card-header bg-white">
+                <strong>Tình trạng đơn hàng</strong>
+            </div>
+            <div class="card-body">
+                <div class="pipeline-row">
                     <div>
-                        <strong>@Model.ShippingOrders</strong>
-                        <p class="small text-muted mb-0">Đang giao</p>
+                        <p class="mb-1 text-muted">Chờ xác nhận</p>
+                        <h5 class="mb-0">@Model.PendingOrders</h5>
+                    </div>
+                    <div class="progress flex-grow-1 ms-3" style="height: 6px; align-self: center;">
+                        <div class="progress-bar bg-warning" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="pipeline-row">
+                    <div>
+                        <p class="mb-1 text-muted">Đang giao</p>
+                        <h5 class="mb-0">@Model.ShippingOrders</h5>
+                    </div>
+                    <div class="progress flex-grow-1 ms-3" style="height: 6px; align-self: center;">
+                        <div class="progress-bar bg-info" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="pipeline-row">
+                    <div>
+                        <p class="mb-1 text-muted">Hoàn thành</p>
+                        <h5 class="mb-0">@Model.TotalOrders</h5>
+                    </div>
+                    <div class="progress flex-grow-1 ms-3" style="height: 6px; align-self: center;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
@@ -125,7 +152,7 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <strong>Đơn hàng gần đây</strong>
-                <a asp-controller="AdminOrder" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                <a asp-controller="Admin" asp-action="LichSuDonHang" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -196,33 +223,48 @@
     </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-3 mt-1">
     <div class="col-md-4">
         <a class="text-decoration-none" asp-controller="AdminProduct" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card quick-card h-100">
                 <div class="card-body">
-                    <h5>Quản lý sản phẩm</h5>
-                    <p class="text-muted mb-0">Thêm/Sửa/Xoá sản phẩm, cập nhật hình ảnh, tồn kho.</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="quick-icon bg-primary-subtle text-primary"><i class="fa fa-box"></i></span>
+                        <div>
+                            <h5 class="mb-1">Quản lý sản phẩm</h5>
+                            <p class="text-muted mb-0">Danh mục, tồn kho, hình ảnh.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-4">
-        <a class="text-decoration-none" asp-controller="AdminCategory" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+        <a class="text-decoration-none" asp-controller="Admin" asp-action="LichSuDonHang">
+            <div class="card quick-card h-100">
                 <div class="card-body">
-                    <h5>Quản lý danh mục</h5>
-                    <p class="text-muted mb-0">Sắp xếp nhóm sản phẩm giúp khách hàng tìm kiếm nhanh.</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="quick-icon bg-success-subtle text-success"><i class="fa fa-truck"></i></span>
+                        <div>
+                            <h5 class="mb-1">Bán hàng & giao hàng</h5>
+                            <p class="text-muted mb-0">Theo dõi hành trình đơn.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-4">
-        <a class="text-decoration-none" asp-controller="AdminOrder" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+        <a class="text-decoration-none" asp-controller="AdminReport" asp-action="Index">
+            <div class="card quick-card h-100">
                 <div class="card-body">
-                    <h5>Bán hàng & giao hàng</h5>
-                    <p class="text-muted mb-0">Theo dõi đơn, xác nhận giao, cập nhật trạng thái.</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="quick-icon bg-warning-subtle text-warning"><i class="fa fa-chart-pie"></i></span>
+                        <div>
+                            <h5 class="mb-1">Báo cáo & thống kê</h5>
+                            <p class="text-muted mb-0">Doanh thu, khách hàng, lợi nhuận.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
@@ -231,33 +273,70 @@
 
 <div class="row g-3 mt-1">
     <div class="col-md-4">
-        <a class="text-decoration-none" asp-controller="AdminReport" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+        <a class="text-decoration-none" asp-controller="AdminCategory" asp-action="Index">
+            <div class="card quick-card h-100">
                 <div class="card-body">
-                    <h5>Báo cáo & thống kê</h5>
-                    <p class="text-muted mb-0">Doanh thu ngày/tháng/năm, khách hàng, tồn kho, sản phẩm bán chạy.</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="quick-icon bg-info-subtle text-info"><i class="fa fa-tags"></i></span>
+                        <div>
+                            <h5 class="mb-1">Quản lý danh mục</h5>
+                            <p class="text-muted mb-0">Sắp xếp bộ sưu tập.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-4">
         <a class="text-decoration-none" asp-controller="AdminStaff" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card quick-card h-100">
                 <div class="card-body">
-                    <h5>Quản lý nhân viên</h5>
-                    <p class="text-muted mb-0">Thêm mới, phân quyền, cập nhật thông tin đội ngũ.</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="quick-icon bg-danger-subtle text-danger"><i class="fa fa-users-gear"></i></span>
+                        <div>
+                            <h5 class="mb-1">Quản lý nhân viên</h5>
+                            <p class="text-muted mb-0">Phân quyền & theo dõi KPI.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-4">
-        <a class="text-decoration-none" asp-controller="AdminCustomer" asp-action="Index">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="d-flex flex-column gap-3 h-100">
+            <a class="text-decoration-none" asp-controller="AdminCustomer" asp-action="Index">
+                <div class="card quick-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="quick-icon bg-secondary-subtle text-secondary"><i class="fa fa-user-check"></i></span>
+                            <div>
+                                <h5 class="mb-1">Quản lý khách hàng</h5>
+                                <p class="text-muted mb-0">Chăm sóc & lịch sử mua.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <div class="card quick-card contact-card shadow-sm">
                 <div class="card-body">
-                    <h5>Quản lý khách hàng</h5>
-                    <p class="text-muted mb-0">Theo dõi tài khoản, khoá/mở, xem lịch sử mua hàng.</p>
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="quick-icon text-white" style="background: linear-gradient(135deg, #f0821b, #d46f12);"><i class="fa fa-comments"></i></span>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1" style="color:#d46f12;">Quản lý liên hệ</h5>
+                            <p class="text-muted mb-3">Theo dõi phản hồi khách hàng và trả lời kịp thời.</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="AdminContact" asp-action="Index" class="btn btn-sm text-white" style="background:#f0821b; border:none;">
+                                    <i class="fa fa-inbox me-1"></i> Xem liên hệ
+                                </a>
+                                <a asp-controller="AdminContact" asp-action="Index" class="btn btn-sm btn-outline-warning text-warning">
+                                    <i class="fa fa-reply me-1"></i> Phản hồi ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </a>
+        </div>
     </div>
 </div>

@@ -1,4 +1,5 @@
-@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.NhanVien>
+@using System.Linq
+@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.User>
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
@@ -9,8 +10,16 @@
         <p class="page-subtitle">Danh sách nhân sự và phân quyền</p>
     </div>
     <div class="header-actions">
-        <a asp-action="Create" class="btn btn-primary">+ Thêm nhân viên</a>
+        <div class="d-flex gap-2 justify-content-end">
+            <a class="btn btn-success" asp-controller="Admin" asp-action="Dashboard">
+                <i class="fa fa-chart-line me-2"></i>Quay về Dashboard
+            </a>
+            <a class="btn btn-outline-light text-dark" asp-controller="Admin" asp-action="Users">
+                <i class="fa fa-users-gear me-2"></i>Quản lý người dùng
+            </a>
+        </div>
     </div>
+
 </div>
 
 <div class="panel">
@@ -20,28 +29,40 @@
                 <tr>
                     <th>Mã NV</th>
                     <th>Họ tên</th>
+                    <th>Tên đăng nhập</th>
                     <th>Email</th>
-                    <th>Mật khẩu</th>
+                    <th>Điện thoại</th>
+                    <th>Trạng thái</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var staff in Model)
+                @if (!Model.Any())
                 {
                     <tr>
-                        <td>#@staff.MaNV</td>
-                        <td>@staff.HoTen</td>
-                        <td>@staff.Email</td>
-                        <td><span class="text-muted">@staff.MatKhau</span></td>
-                        <td class="text-end">
-                            <a asp-action="Edit" asp-route-id="@staff.MaNV" class="btn btn-sm btn-outline">Sửa</a>
-                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Xóa nhân viên này?');">
-                                <input type="hidden" name="id" value="@staff.MaNV" />
-                                <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                                @Html.AntiForgeryToken()
-                            </form>
-                        </td>
+                        <td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản nhân viên.</td>
                     </tr>
+                }
+                else
+                {
+                    foreach (var staff in Model)
+                    {
+                        <tr>
+                            <td>#@staff.Id</td>
+                            <td>@staff.Fullname</td>
+                            <td>@staff.TenDangNhap</td>
+                            <td>@staff.Email</td>
+                            <td>@(string.IsNullOrWhiteSpace(staff.PhoneNumber) ? "-" : staff.PhoneNumber)</td>
+                            <td>
+                                <span class="badge @(staff.Status ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                    @(staff.Status ? "Hoạt động" : "Đã khóa")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="Admin" asp-action="EditRole" asp-route-id="@staff.Id" class="btn btn-sm btn-outline-primary">Cập nhật</a>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

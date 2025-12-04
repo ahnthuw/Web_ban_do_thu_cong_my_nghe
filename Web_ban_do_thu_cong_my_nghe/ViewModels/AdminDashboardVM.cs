@@ -68,6 +68,7 @@ namespace Web_ban_do_thu_cong_my_nghe.ViewModels
 
     public class InventoryAlertVM
     {
+        public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public int CurrentStock { get; set; }
         public int Threshold { get; set; } = 10;

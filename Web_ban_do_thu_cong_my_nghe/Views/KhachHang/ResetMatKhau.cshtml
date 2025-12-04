@@ -1,0 +1,154 @@
+@model Web_ban_do_thu_cong_my_nghe.ViewModels.ResetPasswordVM
+@{
+    Layout = "~/Views/Shared/_LayoutCustomer.cshtml";
+    ViewData["Title"] = ViewData["Title"] ?? "Đặt lại mật khẩu";
+    var statusMessage = TempData["StatusMessage"] as string;
+    var username = ViewBag.Username as string;
+}
+
+<style>
+    :root {
+        --reset-primary: #f0821b;
+        --reset-primary-dark: #d46f12;
+        --reset-bg: #f7f7f7;
+        --reset-card: #ffffff;
+        --input-border: #ddd;
+        --muted: #6c6c6c;
+    }
+
+    .reset-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(240, 130, 27, 0.08), rgba(255, 190, 117, 0.15));
+        padding: 40px 15px;
+    }
+
+    .reset-card {
+        width: 100%;
+        max-width: 460px;
+        background: var(--reset-card);
+        border-radius: 24px;
+        padding: 36px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(240, 130, 27, 0.25);
+    }
+
+    .reset-card h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #2b2b2b;
+    }
+
+    .reset-card p {
+        color: var(--muted);
+        margin-bottom: 24px;
+    }
+
+    .reset-form label {
+        font-weight: 600;
+        color: #3b3b3b;
+    }
+
+    .reset-form .form-control-custom {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--input-border);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .reset-form .form-control-custom:focus {
+        border-color: var(--reset-primary);
+        box-shadow: 0 0 0 3px rgba(240, 130, 27, 0.1);
+        outline: none;
+    }
+
+    .btn-reset {
+        width: 100%;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--reset-primary), var(--reset-primary-dark));
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.02em;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-reset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 25px rgba(240, 130, 27, 0.25);
+    }
+
+    .status-alert {
+        border-radius: 12px;
+        background: rgba(46, 160, 67, 0.08);
+        border: 1px solid rgba(46, 160, 67, 0.2);
+        padding: 12px 16px;
+        color: #2e7742;
+        font-weight: 500;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .back-login {
+        margin-top: 18px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .back-login a {
+        color: var(--reset-primary);
+        text-decoration: none;
+    }
+
+    .back-login a:hover {
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 576px) {
+        .reset-card {
+            padding: 28px 22px;
+        }
+    }
+</style>
+
+<div class="reset-wrapper">
+    <div class="reset-card">
+        <h1>Đặt lại mật khẩu</h1>
+        <p>Xin chào @(string.IsNullOrWhiteSpace(username) ? "bạn" : username), vui lòng nhập mật khẩu mới để hoàn tất.</p>
+
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-alert">@statusMessage</div>
+        }
+
+        <form asp-action="ResetMatKhau" method="post" class="reset-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="MatKhauMoi" class="form-label"></label>
+                <input asp-for="MatKhauMoi" class="form-control-custom" placeholder="Nhập mật khẩu mới" />
+                <span asp-validation-for="MatKhauMoi" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="XacNhanMatKhau" class="form-label"></label>
+                <input asp-for="XacNhanMatKhau" class="form-control-custom" placeholder="Xác nhận mật khẩu" />
+                <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-reset">Cập nhật mật khẩu</button>
+        </form>
+
+        <div class="back-login">
+            <a asp-action="DangNhap">&larr; Quay lại đăng nhập</a>
+        </div>
+    </div>
+</div>

@@ -1,52 +1,313 @@
-﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.User>
+﻿@using System
+@using System.Collections.Generic
+@model IEnumerable<Web_ban_do_thu_cong_my_nghe.Data.User>
 @{
-    ViewData["Title"] = "Quản lý người dùng";
-    ViewData["Subtitle"] = "Danh sách tài khoản";
+    ViewData["Title"] = "Trang chủ quản trị";
+    ViewData["Subtitle"] = "Điều phối hoạt động bán hàng";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+
+    var users = Model?.ToList() ?? new List<Web_ban_do_thu_cong_my_nghe.Data.User>();
+    var totalUsers = users.Count;
+    var adminCount = users.Count(u => string.Equals(u.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase));
+    var staffCount = users.Count(u => string.Equals(u.Role?.Trim(), "Staff", StringComparison.OrdinalIgnoreCase));
+    var customerCount = users.Count(u => string.Equals(u.Role?.Trim(), "Customer", StringComparison.OrdinalIgnoreCase));
+    var activeUsers = users.Count(u => u.Status);
+    var inactiveUsers = Math.Max(0, totalUsers - activeUsers);
+    var activePercent = totalUsers == 0 ? 0 : Math.Round(activeUsers * 100m / totalUsers, 1);
+    var roleStats = users
+        .GroupBy(u => string.IsNullOrWhiteSpace(u.Role) ? "Chưa phân quyền" : u.Role.Trim())
+        .Select(g => new { Role = g.Key, Count = g.Count() })
+        .OrderByDescending(x => x.Count)
+        .ToList();
+    var recentUsers = users
+        .OrderByDescending(u => u.CreatedAt ?? DateTime.MinValue)
+        .ThenByDescending(u => u.Id)
+        .Take(6)
+        .ToList();
 }
 
-<h2>Quản lý người dùng</h2>
+<div class="card border-0 shadow-sm mb-4 text-white" style="background: linear-gradient(135deg, #f28b00, #f4b86a);">
+    <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-4">
+        <div>
+            <p class="text-uppercase small mb-2 text-white-50">Xin chào quản trị viên</p>
+            <h2 class="fw-bold mb-2">Bảng điều khiển My Nghệ Việt</h2>
+            <p class="mb-0">Theo dõi khách hàng, đơn hàng và đội ngũ chỉ trong một trang.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Dashboard" class="btn btn-light text-primary fw-semibold px-4">Xem phân tích</a>
+            <a asp-controller="AdminProduct" asp-action="Create" class="btn btn-outline-light px-4">Thêm sản phẩm</a>
+        </div>
+    </div>
+</div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Tên Đăng Nhập</th>
-            <th>Họ Tên (Fullname)</th>
-            <th>Email</th>
-            <th>Vai trò (Role)</th>
-            <th>Hành động</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.Id</td>
-                <td>@user.TenDangNhap</td>
-                <td>@user.Fullname</td>
-                <td>@user.Email</td>
-                <td>
-                    @if (user.Role == "Admin")
-                    {
-                        <strong class="text-danger">@user.Role</strong>
-                    }
-                    else if (user.Role == "Staff")
-                    {
-                        <strong class="text-success">@user.Role</strong>
-                    }
-                    else
-                    {
-                        @user.Role
-                    }
-              
-                </td>
-                <td>
-                    <a asp-action="EditRole" asp-route-id="@user.Id" class="btn btn-primary btn-sm">
-                        Phân quyền
-                    </a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Tổng tài khoản</p>
+                <div class="d-flex align-items-end justify-content-between">
+                    <h3 class="fw-bold mb-0">@totalUsers</h3>
+                    <span class="badge bg-light text-primary border border-primary">@activeUsers hoạt động</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Quản trị & nhân viên</p>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="fw-bold mb-0">@(@adminCount + staffCount)</h3>
+                        <small class="text-muted">@adminCount admin · @staffCount staff</small>
+                    </div>
+                    <span class="badge bg-light text-secondary border border-secondary">Đội ngũ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Khách hàng thân thiết</p>
+                <div class="d-flex align-items-center justify-content-between">
+                    <h3 class="fw-bold mb-0">@customerCount</h3>
+                    <span class="badge bg-light text-success border border-success">+@customerCount</span>
+                </div>
+                <small class="text-muted">Sẵn sàng cho chiến dịch mới</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Trạng thái hệ thống</p>
+                <div class="d-flex align-items-center justify-content-between">
+                    <h3 class="fw-bold mb-0 text-primary">@activeUsers</h3>
+                    <span class="text-muted">@inactiveUsers tạm khóa</span>
+                </div>
+                <small class="text-muted">Kiểm soát trong phần "Phân quyền".</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Tài khoản mới nhất</strong>
+                <a asp-action="EditRole" asp-route-id="@(recentUsers.FirstOrDefault()?.Id ?? 0)" class="btn btn-sm btn-outline-secondary">Phân quyền nhanh</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-nowrap">Người dùng</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!recentUsers.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có dữ liệu người dùng.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var user in recentUsers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <strong>@user.Fullname</strong>
+                                                <small class="text-muted">@user.TenDangNhap</small>
+                                            </div>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            <span class="badge @(string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase) ? "bg-light text-danger border border-danger" : string.Equals(user.Role, "Staff", StringComparison.OrdinalIgnoreCase) ? "bg-light text-success border border-success" : "bg-light text-secondary border border-secondary")">
+                                                @(string.IsNullOrWhiteSpace(user.Role) ? "Chưa phân" : user.Role)
+                                            </span>
+                                        </td>
+                                        <td>@(user.CreatedAt?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                        <td class="text-end">
+                                            <a asp-action="EditRole" asp-route-id="@user.Id" class="btn btn-sm btn-light border">Cập nhật</a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <strong>Phân bổ vai trò</strong>
+            </div>
+            <div class="card-body">
+                @if (!roleStats.Any())
+                {
+                    <p class="text-muted mb-0">Chưa có dữ liệu phân quyền.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var stat in roleStats)
+                        {
+                            var percent = totalUsers == 0 ? 0 : Math.Round(stat.Count * 100m / totalUsers, 1);
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@stat.Role</strong>
+                                    <p class="mb-0 small text-muted">@percent% người dùng</p>
+                                </div>
+                                <span class="badge bg-light text-primary border border-primary">@stat.Count</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Quản lý nhanh</strong>
+                <a asp-controller="Admin" asp-action="LichSuDonHang" class="btn btn-sm btn-outline-primary">Lịch sử đơn hàng</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminProduct" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Sản phẩm</div>
+                                <p class="text-muted small mb-0">Thêm, sửa, tồn kho</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminCategory" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Danh mục</div>
+                                <p class="text-muted small mb-0">Sắp xếp bộ sưu tập</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminOrder" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Đơn hàng</div>
+                                <p class="text-muted small mb-0">Theo dõi tiến độ</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminCustomer" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Khách hàng</div>
+                                <p class="text-muted small mb-0">Lịch sử & chăm sóc</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminStaff" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Nhân viên</div>
+                                <p class="text-muted small mb-0">Phân quyền, thông tin</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="AdminReport" asp-action="Index" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Báo cáo</div>
+                                <p class="text-muted small mb-0">Doanh thu & xu hướng</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="Admin" asp-action="Dashboard" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Phân tích</div>
+                                <p class="text-muted small mb-0">Biểu đồ và KPI</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <a asp-controller="Admin" asp-action="Users" class="text-decoration-none">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="fw-semibold mb-1">Người dùng</div>
+                                <p class="text-muted small mb-0">Quản lý tài khoản</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <strong>Ghi chú điều hành</strong>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex mb-3">
+                        <span class="badge bg-light text-primary border border-primary me-3">1</span>
+                        <div>
+                            <strong>Rà soát đơn mới</strong>
+                            <p class="mb-0 small text-muted">Vào mục "Đơn hàng" để xác nhận thanh toán.</p>
+                        </div>
+                    </li>
+                    <li class="d-flex mb-3">
+                        <span class="badge bg-light text-primary border border-primary me-3">2</span>
+                        <div>
+                            <strong>Cập nhật bộ sưu tập Tết</strong>
+                            <p class="mb-0 small text-muted">Thêm hình ảnh mới trong "Sản phẩm".</p>
+                        </div>
+                    </li>
+                    <li class="d-flex">
+                        <span class="badge bg-light text-primary border border-primary me-3">3</span>
+                        <div>
+                            <strong>Gửi ưu đãi cho khách VIP</strong>
+                            <p class="mb-0 small text-muted">Lọc khách hàng thân thiết và gửi mã giảm.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Tình trạng truy cập</strong>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <p class="text-muted mb-1">Tài khoản hoạt động</p>
+                        <h4 class="fw-bold mb-0">@activeUsers</h4>
+                    </div>
+                    <div class="text-end">
+                        <p class="text-muted mb-1">Tạm khóa</p>
+                        <h4 class="fw-bold mb-0">@inactiveUsers</h4>
+                    </div>
+                </div>
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@activePercent">
+                    <div class="progress-bar bg-primary" style="width: @activePercent%"></div>
+                </div>
+                <small class="text-muted d-block mt-2">Quản lý chi tiết tại mục "Người dùng".</small>
+            </div>
+        </div>
+    </div>
+</div>

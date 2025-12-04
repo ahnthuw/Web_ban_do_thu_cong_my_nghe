@@ -1,0 +1,275 @@
+@model Web_ban_do_thu_cong_my_nghe.ViewModels.Contact.AdminContactDashboardVM
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Quản lý liên hệ khách hàng";
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+<style>
+    :root {
+        --contact-orange: #f0821b;
+        --contact-orange-dark: #d46f12;
+        --contact-border: #f3d5b6;
+        --contact-bg: #fffaf5;
+    }
+
+    .contact-wrapper {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid var(--contact-border);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+    }
+
+    .contact-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        color: var(--contact-orange-dark);
+    }
+
+    .contact-header i {
+        font-size: 1.4rem;
+    }
+
+    .contact-table thead {
+        background: var(--contact-bg);
+    }
+
+    .contact-table th {
+        font-weight: 600;
+        color: #4b4b4b;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .status-badge {
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-success {
+        background: rgba(46, 204, 113, 0.15);
+        color: #229954;
+        border: 1px solid rgba(46, 204, 113, 0.35);
+    }
+
+    .status-warning {
+        background: rgba(241, 196, 15, 0.15);
+        color: #b9770e;
+        border: 1px solid rgba(241, 196, 15, 0.35);
+    }
+
+    .action-buttons .btn {
+        font-size: 0.8rem;
+        border-radius: 30px;
+    }
+
+    .action-buttons .btn-view {
+        background: #1f8ef1;
+        color: #fff;
+    }
+
+    .action-buttons .btn-reply {
+        border: 1px solid var(--contact-orange);
+        color: var(--contact-orange-dark);
+    }
+
+    .action-buttons .btn-delete {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .back-dashboard {
+        margin-top: 18px;
+        text-align: center;
+    }
+
+    .back-dashboard a {
+        border-radius: 999px;
+        padding: 10px 28px;
+        background: linear-gradient(135deg, var(--contact-orange), var(--contact-orange-dark));
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .conversation-panel {
+        margin-top: 32px;
+        border: 1px solid var(--contact-border);
+        border-radius: 20px;
+        padding: 24px;
+        background: #fff;
+    }
+
+    .conversation-panel h5 {
+        color: var(--contact-orange-dark);
+    }
+
+    .message-stream {
+        max-height: 360px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding-right: 8px;
+    }
+
+    .msg-bubble {
+        border-radius: 16px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+    }
+
+    .msg-bubble.customer {
+        background: #fff8ef;
+        border: 1px solid rgba(240, 130, 27, 0.4);
+    }
+
+    .msg-bubble.admin {
+        background: linear-gradient(135deg, var(--contact-orange), var(--contact-orange-dark));
+        color: #fff;
+    }
+
+    .msg-bubble time {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+</style>
+
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <div class="alert alert-success">@statusMessage</div>
+}
+
+<div class="contact-wrapper">
+    <div class="contact-header">
+        <i class="fa fa-comments"></i>
+        <div>
+            <h4 class="mb-0">Quản lý liên hệ khách hàng</h4>
+            <small class="text-muted">Theo dõi và phản hồi mọi yêu cầu từ khách hàng</small>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle contact-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Nội dung</th>
+                    <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Threads.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có khách hàng nào liên hệ.</td>
+                    </tr>
+                }
+                else
+                {
+                    var index = 1;
+                    foreach (var thread in Model.Threads)
+                    {
+                        var statusClass = thread.LastFromCustomer ? "status-badge status-warning" : "status-badge status-success";
+                        var statusText = thread.LastFromCustomer ? "Chưa đọc" : "Đã phản hồi";
+                        <tr>
+                            <td>@index</td>
+                            <td>@thread.CustomerName</td>
+                            <td>@thread.CustomerEmail</td>
+                            <td>@thread.LastMessagePreview</td>
+                            <td>@(thread.LastMessageAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td><span class="@statusClass">@statusText</span></td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2 justify-content-center action-buttons">
+                                    <a asp-action="Index" asp-route-customerId="@thread.CustomerId" class="btn btn-sm btn-view">
+                                        <i class="fa fa-eye me-1"></i> Xem
+                                    </a>
+                                    <a asp-action="Index" asp-route-customerId="@thread.CustomerId" class="btn btn-sm btn-reply">
+                                        <i class="fa fa-reply me-1"></i> Phản hồi
+                                    </a>
+                                    <form asp-action="MarkThreadRead" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="customerId" value="@thread.CustomerId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" @(thread.LastFromCustomer ? string.Empty : "disabled")>
+                                            <i class="fa fa-check me-1"></i> Đánh dấu đã đọc
+                                        </button>
+                                    </form>
+                                    <form asp-action="DeleteThread" method="post" class="d-inline" onsubmit="return confirm('Xoá toàn bộ hội thoại của khách hàng này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="customerId" value="@thread.CustomerId" />
+                                        <button type="submit" class="btn btn-sm btn-delete">
+                                            <i class="fa fa-trash me-1"></i> Xoá
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="back-dashboard">
+        <a asp-controller="Admin" asp-action="Dashboard"><i class="fa fa-arrow-left"></i> Quay lại trang quản trị</a>
+    </div>
+</div>
+
+@if (Model.CurrentConversation != null)
+{
+    <div class="conversation-panel mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1">@Model.CurrentConversation.PartnerName</h5>
+                <small class="text-muted">@Model.CurrentConversation.PartnerRoleLabel</small>
+            </div>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Đóng hội thoại</a>
+        </div>
+
+        <div class="message-stream">
+            @if (Model.CurrentConversation.Messages.Any())
+            {
+                foreach (var message in Model.CurrentConversation.Messages)
+                {
+                    var bubbleClass = message.IsOwn ? "msg-bubble admin" : "msg-bubble customer";
+                    <div class="@bubbleClass">
+                        @message.Content
+                        <time>@message.SentAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">Chưa có tin nhắn nào trong hội thoại này.</p>
+            }
+        </div>
+
+        <form asp-action="Reply" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="customerId" value="@Model.CurrentConversation.PartnerId" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <label asp-for="CurrentConversation.Composer.Message" class="form-label fw-semibold">Nội dung phản hồi</label>
+            <textarea asp-for="CurrentConversation.Composer.Message" class="form-control" rows="4" placeholder="Nhập phản hồi dành cho khách hàng..."></textarea>
+            <span asp-validation-for="CurrentConversation.Composer.Message" class="text-danger"></span>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-sm text-white" style="background: linear-gradient(135deg, var(--contact-orange), var(--contact-orange-dark)); border: none;">
+                    <i class="fa fa-paper-plane me-1"></i> Gửi phản hồi
+                </button>
+            </div>
+        </form>
+    </div>
+}

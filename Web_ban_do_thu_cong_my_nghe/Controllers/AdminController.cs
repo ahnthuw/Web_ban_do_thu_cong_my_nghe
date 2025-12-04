@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Web_ban_do_thu_cong_my_nghe.ViewModels;
 using Web_ban_do_thu_cong_my_nghe.Data;
 using Web_ban_do_thu_cong_my_nghe.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
 
 namespace Web_ban_do_thu_cong_my_nghe.Controllers
 {
@@ -58,7 +61,8 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, admin.Fullname),
+                new Claim(ClaimTypes.Name, admin.Fullname ?? admin.TenDangNhap ?? string.Empty),
+                new Claim(MySetting.CLAIM_CUSTOMERID, admin.Id.ToString()),
                 new Claim("AdminId", admin.Id.ToString()), 
                 new Claim(ClaimTypes.Role, "Admin")
             };
@@ -67,10 +71,11 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            HttpContext.Session.SetInt32(MySetting.SESSION_USER_ID_KEY, admin.Id);
 
 
             
-            return RedirectToAction("Dashboard", "Admin");
+            return RedirectToAction(nameof(Dashboard));
         }
 
 
@@ -78,17 +83,23 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Logout()
         {
+            HttpContext.Session.Remove(MySetting.SESSION_USER_ID_KEY);
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login", "Admin");
+            return RedirectToAction("DangNhap", "KhachHang");
         }
 
         
         [Authorize(Roles = "Admin")] 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        [Authorize(Roles = "Admin")] 
+        public async Task<IActionResult> Users()
+        {
             var users = await _db.Users.ToListAsync();
-            return View(users); 
+            return View(users);
         }
         
         [Authorize(Roles = "Admin")]
@@ -118,7 +129,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             var unitsSold = await _db.OrderDetails.SumAsync(od => (int?)od.Quantity) ?? 0;
             var productCount = await _db.Products.CountAsync();
             var categoryCount = await _db.Categories.CountAsync();
-            var staffCount = await _db.NhanViens.CountAsync();
+            var staffCount = await _db.Users.CountAsync(u => u.Role != null && u.Role.Trim().ToLower() == "staff");
             var customerCount = await _db.Users.CountAsync(u => u.Role == "Customer");
             var pendingOrders = await _db.Orders.CountAsync(o => o.Status == OrderStatusHelper.Pending);
             var shippingOrders = await _db.Orders.CountAsync(o => o.Status == OrderStatusHelper.Shipping);
@@ -209,6 +220,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> LichSuDonHang()
         {
+            await EnsureTrangThaiSeededAsync();
             var orders = await _db.Orders
                 .OrderByDescending(o => o.Id)
                 .Include(o => o.User)
@@ -229,6 +241,8 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 return RedirectToAction(nameof(LichSuDonHang));
             }
 
+            await EnsureTrangThaiSeededAsync();
+
             var order = await _db.Orders.FindAsync(id);
             if (order == null)
             {
@@ -240,7 +254,36 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             await _db.SaveChangesAsync();
 
             TempData["StatusMessage"] = "Cập nhật trạng thái thành công.";
-            return RedirectToAction(nameof(LichSuDonHang));
+            return RedirectToAction(nameof(LichSuDonHang), new { highlight = id });
+        }
+
+        private async Task EnsureTrangThaiSeededAsync()
+        {
+            var knownStatuses = OrderStatusHelper.AllStatuses;
+            var existingKeys = await _db.TrangThais.Select(t => t.MaTrangThai).ToListAsync();
+            var missingKeys = knownStatuses.Keys.Except(existingKeys).ToList();
+
+            if (!missingKeys.Any())
+            {
+                return;
+            }
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            await _db.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT TrangThai ON");
+
+            foreach (var key in missingKeys)
+            {
+                _db.TrangThais.Add(new TrangThai
+                {
+                    MaTrangThai = key,
+                    TenTrangThai = knownStatuses[key],
+                    MoTa = $"Trạng thái {knownStatuses[key]}"
+                });
+            }
+
+            await _db.SaveChangesAsync();
+            await _db.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT TrangThai OFF");
+            await transaction.CommitAsync();
         }
 
         private void ConfigureAdminLoginView()

@@ -65,5 +65,44 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             TempData["StatusMessage"] = "Đã cập nhật trạng thái đơn hàng.";
             return RedirectToAction(nameof(Index));
         }
+
+        public async Task<IActionResult> Detail(int id)
+        {
+            var order = await _db.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["Title"] = $"Đơn hàng #{order.Id}";
+            ViewData["Subtitle"] = "Thông tin chi tiết & sản phẩm";
+
+            return View(order);
+        }
+
+        public async Task<IActionResult> Invoice(int id)
+        {
+            var order = await _db.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            var invoice = InvoiceVM.FromOrder(order, true);
+            invoice.BackUrl = Url.Action("LichSuDonHang", "Admin");
+            invoice.BackLabel = "Quay về lịch sử đơn hàng";
+
+            return View("~/Views/Shared/Invoice.cshtml", invoice);
+        }
     }
 }

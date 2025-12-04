@@ -29,6 +29,7 @@
 
     <!-- Template Stylesheet -->
     <link href="~/css/style.css" rel="stylesheet" asp-append-version="true">
+    @RenderSection("Styles", required: false)
 </head>
 <body>
    
@@ -47,7 +48,7 @@
                     <div class="d-inline-flex align-items-center" style="height: 45px;">
                         
                         <a href="#" class="text-muted mx-2"> Hỗ trợ</a><small> / </small>
-                        <a href="#" class="text-muted ms-2"> Liên hệ</a>
+                        <a asp-controller="KhachHang" asp-action="LienHe" class="text-muted ms-2"> Liên hệ</a>
 
                     </div>
                 </div>
@@ -290,7 +291,7 @@
                                 <a asp-controller="HangHoa" asp-action="Index" class="nav-item nav-link">Shop</a>
                                 <a asp-controller="HangHoa" asp-action="BestSeller" class="nav-item nav-link">Bán chạy</a>
 
-                            <a asp-controller="KhachHang" asp-action="DangKy" class="nav-item nav-link">Đăng Ký</a>
+                           
 
                                 <div class="nav-item dropdown">
                                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
@@ -302,7 +303,7 @@
                                         
                                     </div>
                                 </div>
-                                <a href="contact.html" class="nav-item nav-link me-2">Liên hệ</a>
+                                <a asp-controller="KhachHang" asp-action="LienHe" class="nav-item nav-link me-2">Liên hệ</a>
                                 <div class="nav-item dropdown d-block d-lg-none mb-3">
                                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">All Category</a>
                                     <div class="dropdown-menu m-0">
