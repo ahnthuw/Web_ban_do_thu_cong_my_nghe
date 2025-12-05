@@ -5,7 +5,12 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <h2 class="h4 mb-4">Cập nhật sản phẩm</h2>
+        <h2 class="h4 mb-2">Cập nhật sản phẩm</h2>
+        <div class="mb-4">
+            <span class="badge bg-primary me-2">Giá bán: @Model.Price.ToString("N0") đ</span>
+            <span class="badge bg-info text-dark me-2">Giá nhập: @(Model.CostPrice.HasValue ? Model.CostPrice.Value.ToString("N0") + " đ" : "chưa nhập")</span>
+            <span class="badge bg-secondary">Tồn kho: @Model.Stock</span>
+        </div>
         <form asp-action="Edit" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />

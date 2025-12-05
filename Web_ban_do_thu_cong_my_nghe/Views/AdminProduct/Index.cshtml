@@ -31,7 +31,8 @@
                     <th>ID</th>
                     <th>Tên</th>
                     <th>Danh mục</th>
-                    <th>Giá</th>
+                    <th>Giá bán</th>
+                    <th>Giá nhập</th>
                     <th>Tồn kho</th>
                     <th>Cập nhật</th>
                     <th></th>
@@ -54,6 +55,7 @@
                         </td>
                         <td>@product.Category?.Name</td>
                         <td>@product.Price.ToString("N0") đ</td>
+                        <td>@(product.CostPrice.HasValue ? product.CostPrice.Value.ToString("N0") + " đ" : "-")</td>
                         <td>
                             @if (product.Stock <= 5)
                             {

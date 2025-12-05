@@ -1,0 +1,243 @@
+@using Web_ban_do_thu_cong_my_nghe.ViewModels.Contact
+@model Web_ban_do_thu_cong_my_nghe.ViewModels.Contact.PublicContactFormVM
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var statusMessage = TempData["StatusMessage"] as string;
+    var historyEmail = ViewBag.HistoryEmail as string ?? string.Empty;
+    var history = ViewBag.History as List<GuestContactVM> ?? new List<GuestContactVM>();
+}
+
+<style>
+    .contact-hero {
+        background: linear-gradient(120deg, #f0821b, #f4a261);
+        color: #fff;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 45px rgba(240, 130, 27, 0.35);
+        margin-bottom: 32px;
+    }
+
+    .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+    }
+
+    .contact-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        border: 1px solid #ffe3c6;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .contact-card h5 {
+        color: #f0821b;
+        margin-bottom: 12px;
+    }
+
+    .contact-card label {
+        font-weight: 600;
+    }
+
+    .contact-card .form-control {
+        border-radius: 14px;
+        border: 1px solid #f4d4b4;
+        padding: 12px 14px;
+    }
+
+    .contact-card button[type="submit"] {
+        background: linear-gradient(120deg, #f0821b, #e76f51);
+        border: none;
+        border-radius: 30px;
+        padding: 12px 32px;
+        font-weight: 600;
+    }
+
+    .contact-info-card {
+        background: #fffaf5;
+        border: 1px dashed #f5c58a;
+        border-radius: 20px;
+        padding: 24px;
+    }
+
+    .contact-info-item + .contact-info-item {
+        margin-top: 16px;
+    }
+
+    .contact-info-item strong {
+        color: #d86216;
+    }
+
+    .history-card {
+        margin-top: 24px;
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #ffe3c6;
+        padding: 24px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
+    }
+
+    .history-card h5 {
+        color: #f0821b;
+    }
+
+    .history-search {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .history-search input {
+        flex: 1;
+        min-width: 220px;
+        border-radius: 14px;
+        border: 1px solid #f4d4b4;
+        padding: 10px 14px;
+    }
+
+    .history-search button {
+        border-radius: 30px;
+        border: none;
+        background: linear-gradient(120deg, #f0821b, #e76f51);
+        color: #fff;
+        padding: 10px 22px;
+        font-weight: 600;
+    }
+
+    .history-timeline {
+        margin-top: 8px;
+    }
+
+    .history-item {
+        border-left: 3px solid #f5c58a;
+        padding-left: 16px;
+        margin-bottom: 18px;
+    }
+
+    .history-item strong {
+        color: #d46f12;
+    }
+
+    .history-item small {
+        display: block;
+        color: #9a785f;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="contact-hero text-center">
+        <h1 class="fw-bold mb-2">Liên hệ với chúng tôi</h1>
+        <p class="mb-0">Bạn không cần đăng nhập vẫn có thể gửi thắc mắc. Đội ngũ hỗ trợ sẽ phản hồi qua email hoặc điện thoại trong thời gian sớm nhất.</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa fa-check-circle me-2"></i> @statusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="contact-grid">
+        <div class="contact-card">
+            <h5 class="fw-semibold">Gửi thông tin liên hệ</h5>
+            <p class="text-muted">Chúng tôi sẽ hồi đáp trong vòng 24 giờ làm việc.</p>
+            <form asp-action="Index" method="post" novalidate>
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" placeholder="Nhập họ tên đầy đủ" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" placeholder="example@gmail.com" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" placeholder="Số điện thoại" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label"></label>
+                    <input asp-for="Subject" class="form-control" placeholder="Chủ đề liên hệ" />
+                    <span asp-validation-for="Subject" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Message" class="form-label"></label>
+                    <textarea asp-for="Message" rows="5" class="form-control" placeholder="Nhập nội dung"></textarea>
+                    <span asp-validation-for="Message" class="text-danger"></span>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary text-white">
+                        <i class="fa fa-paper-plane me-2"></i> Gửi liên hệ
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="contact-info-card">
+            <h5 class="fw-semibold mb-3">Thông tin hỗ trợ</h5>
+            <div class="contact-info-item">
+                <strong>Email:</strong>
+                <div>support@myngheviet.vn</div>
+            </div>
+            <div class="contact-info-item">
+                <strong>Hotline:</strong>
+                <div>0987 123 456 (8:00 - 21:00)</div>
+            </div>
+            <div class="contact-info-item">
+                <strong>Địa chỉ:</strong>
+                <div>123 Trần Hưng Đạo, Quận 1, TP.HCM</div>
+            </div>
+            <div class="contact-info-item">
+                <strong>Giờ làm việc:</strong>
+                <div>Thứ 2 - Chủ nhật (8:00 - 21:00)</div>
+            </div>
+            <div class="contact-info-item">
+                <strong>Kênh khác:</strong>
+                <div>Zalo OA: @@myngheviet</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-semibold mb-1">Lịch sử liên hệ của bạn</h5>
+                <p class="text-muted mb-0">Nhập email đã dùng để xem những lần gửi trước đây.</p>
+            </div>
+        </div>
+
+        <form asp-action="Index" method="get" class="history-search" role="search">
+            <input type="email" name="email" value="@historyEmail" placeholder="Nhập email để tra cứu" required />
+            <button type="submit"><i class="fa fa-search me-2"></i>Tra cứu</button>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(historyEmail) && !history.Any())
+        {
+            <p class="text-muted">Chưa tìm thấy liên hệ nào với email <strong>@historyEmail</strong>.</p>
+        }
+
+        @if (history.Any())
+        {
+            <div class="history-timeline">
+                @foreach (var item in history)
+                {
+                    <div class="history-item">
+                        <strong>@(item.Subject ?? "(Không có chủ đề)")</strong>
+                        <small>@item.SentAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @(item.IsProcessed ? "Đã xử lý" : "Đang chờ phản hồi")</small>
+                        <div>@item.Message</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

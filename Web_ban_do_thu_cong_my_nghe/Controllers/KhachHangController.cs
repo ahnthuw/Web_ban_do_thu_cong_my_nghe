@@ -115,7 +115,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         [Authorize(Roles = "Customer")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LienHe(ContactSendVM input)
+        public async Task<IActionResult> LienHe([Bind(Prefix = "Composer")] ContactSendVM input)
         {
             var customerIdValue = User.FindFirstValue(MySetting.CLAIM_CUSTOMERID);
             if (string.IsNullOrEmpty(customerIdValue))

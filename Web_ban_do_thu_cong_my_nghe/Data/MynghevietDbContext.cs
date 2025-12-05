@@ -34,6 +34,10 @@ public partial class MynghevietDbContext : DbContext
 
     public virtual DbSet<ContactMessage> ContactMessages { get; set; }
 
+    public virtual DbSet<GuestContact> GuestContacts { get; set; }
+
+    public virtual DbSet<ContactThreadRead> ContactThreadReads { get; set; }
+
 
 
     //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -87,6 +91,7 @@ public partial class MynghevietDbContext : DbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.CostPrice).HasColumnName("cost_price").HasColumnType("decimal(18,2)");
             entity.Property(e => e.ImageUrl).HasColumnName("image_url");
             entity.Property(e => e.Stock).HasColumnName("stock");
             entity.Property(e => e.CategoryId).HasColumnName("category_id");
@@ -210,6 +215,28 @@ public partial class MynghevietDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<GuestContact>(entity =>
+        {
+            entity.ToTable("guest_contacts");
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(30);
+            entity.Property(e => e.Subject).HasMaxLength(200);
+            entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.SentAt).HasColumnType("datetime2");
+        });
+
+        modelBuilder.Entity<ContactThreadRead>(entity =>
+        {
+            entity.ToTable("contact_thread_reads");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AdminId).IsRequired();
+            entity.Property(e => e.CustomerId).IsRequired();
+            entity.Property(e => e.LastReadAt).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.AdminId, e.CustomerId }).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

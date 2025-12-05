@@ -1,8 +1,8 @@
-﻿@model IEnumerable<Web_ban_do_thu_cong_my_nghe.ViewModels.HangHoaVM>
+﻿@model Web_ban_do_thu_cong_my_nghe.ViewModels.HangHoaIndexVM
 @using System.Linq
 @{
     ViewData["Title"] = "Index";
-    var discountedItems = Model.Where(p => p.GiamGiaPhanTram > 0).Take(10).ToList();
+    var discountedItems = Model.Items.Where(p => p.GiamGiaPhanTram > 0).Take(10).ToList();
 }
 
 <!-- Single Page Header start -->
@@ -186,18 +186,26 @@
                     <div id="tab-5" class="tab-pane fade show p-0 active">
                         <div class="row g-4 product">
 
-						@await Html.PartialAsync("ProductItem", Model)
+                        @await Html.PartialAsync("ProductItem", Model.Items)
 
                             <div class="col-12 wow fadeInUp" data-wow-delay="0.1s">
                                 <div class="pagination d-flex justify-content-center mt-5">
-                                    <a href="#" class="rounded">&laquo;</a>
-                                    <a href="#" class="active rounded">1</a>
-                                    <a href="#" class="rounded">2</a>
-                                    <a href="#" class="rounded">3</a>
-                                    <a href="#" class="rounded">4</a>
-                                    <a href="#" class="rounded">5</a>
-                                    <a href="#" class="rounded">6</a>
-                                    <a href="#" class="rounded">&raquo;</a>
+                                    @{
+                                        var current = Model.Page;
+                                        var total = Model.TotalPages;
+                                        var loai = Model.CategoryId;
+                                        int start = System.Math.Max(1, current - 2);
+                                        int end = System.Math.Min(total, current + 2);
+                                    }
+                                    @if (total > 1)
+                                    {
+                                        <a class="rounded @(current == 1 ? "disabled" : null)" asp-action="Index" asp-route-loai="@loai" asp-route-page="@(current - 1)" asp-route-pageSize="@Model.PageSize" asp-route-pages="@Model.TotalPages">&laquo;</a>
+                                        @for (int i = start; i <= end; i++)
+                                        {
+                                            <a class="rounded @(i == current ? "active" : null)" asp-action="Index" asp-route-loai="@loai" asp-route-page="@i" asp-route-pageSize="@Model.PageSize" asp-route-pages="@Model.TotalPages">@i</a>
+                                        }
+                                        <a class="rounded @(current == total ? "disabled" : null)" asp-action="Index" asp-route-loai="@loai" asp-route-page="@(current + 1)" asp-route-pageSize="@Model.PageSize" asp-route-pages="@Model.TotalPages">&raquo;</a>
+                                    }
                                 </div>
                             </div>
                         </div>

@@ -43,6 +43,11 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product model)
         {
+            if (model.CostPrice.HasValue && model.CostPrice.Value > model.Price)
+            {
+                ModelState.AddModelError(nameof(model.CostPrice), "Giá nhập không được lớn hơn giá bán.");
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadCategories();
@@ -79,6 +84,11 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 return BadRequest();
             }
 
+            if (model.CostPrice.HasValue && model.CostPrice.Value > model.Price)
+            {
+                ModelState.AddModelError(nameof(model.CostPrice), "Giá nhập không được lớn hơn giá bán.");
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadCategories();
@@ -94,6 +104,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             existing.Name = model.Name;
             existing.Description = model.Description;
             existing.Price = model.Price;
+            existing.CostPrice = model.CostPrice;
             existing.ImageUrl = model.ImageUrl;
             existing.Stock = model.Stock;
             existing.CategoryId = model.CategoryId;

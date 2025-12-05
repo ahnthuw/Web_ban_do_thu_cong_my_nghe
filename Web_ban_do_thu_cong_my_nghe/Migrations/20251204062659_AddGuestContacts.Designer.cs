@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Web_ban_do_thu_cong_my_nghe.Data;
 
@@ -11,9 +12,11 @@ using Web_ban_do_thu_cong_my_nghe.Data;
 namespace Web_ban_do_thu_cong_my_nghe.Migrations
 {
     [DbContext(typeof(MynghevietDbContext))]
-    partial class MynghevietDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204062659_AddGuestContacts")]
+    partial class AddGuestContacts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

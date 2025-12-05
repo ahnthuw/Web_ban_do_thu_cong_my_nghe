@@ -64,6 +64,14 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 TotalRevenue = await _db.Orders.SumAsync(o => (decimal?)o.TotalMoney) ?? 0m
             };
 
+            var totalCapital = await _db.OrderDetails
+                .Include(od => od.Product)
+                .SumAsync(od => (decimal?)((od.Product != null && od.Product.CostPrice.HasValue) ? od.Quantity * od.Product.CostPrice.Value : 0m)) ?? 0m;
+
+            report.TotalCapital = totalCapital;
+            report.TotalProfit = report.TotalRevenue - report.TotalCapital;
+            report.ProfitMarginPercent = report.TotalRevenue == 0 ? 0 : Math.Round(report.TotalProfit / report.TotalRevenue * 100, 2);
+
             ViewData["Title"] = "Thống kê";
             ViewData["Subtitle"] = "Biểu đồ doanh thu và cảnh báo tồn kho";
             return View(report);

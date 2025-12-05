@@ -44,6 +44,23 @@
         font-size: 0.85rem;
     }
 
+    .guest-wrapper {
+        margin-top: 32px;
+        background: #fff;
+        border-radius: 20px;
+        border: 1px dashed var(--contact-border);
+        padding: 24px;
+    }
+
+    .guest-message {
+        background: #fffaf5;
+        border-radius: 14px;
+        border: 1px solid var(--contact-border);
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        color: #5c4733;
+    }
+
     .status-badge {
         border-radius: 999px;
         padding: 4px 12px;
@@ -229,6 +246,88 @@
     </div>
 </div>
 
+<div class="guest-wrapper">
+    <div class="contact-header">
+        <i class="fa fa-envelope-open-text"></i>
+        <div>
+            <h4 class="mb-0">Liên hệ không cần đăng nhập</h4>
+            <small class="text-muted">Tổng hợp các yêu cầu được gửi từ trang Liên hệ công khai</small>
+        </div>
+    </div>
+
+    @if (!Model.GuestContacts.Any())
+    {
+        <p class="text-muted mb-0">Chưa có liên hệ công khai nào.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle contact-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Điện thoại</th>
+                        <th>Chủ đề</th>
+                        <th>Ngày gửi</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var guestIndex = 1; }
+                    @foreach (var guest in Model.GuestContacts)
+                    {
+                        var guestStatusClass = guest.IsProcessed ? "status-badge status-success" : "status-badge status-warning";
+                        var guestStatusText = guest.IsProcessed ? "Đã xử lý" : "Chưa xử lý";
+                        var collapseId = $"guestMessage-{guest.Id}";
+                        <tr>
+                            <td>@guestIndex</td>
+                            <td>@guest.FullName</td>
+                            <td>@guest.Email</td>
+                            <td>@(string.IsNullOrWhiteSpace(guest.Phone) ? "-" : guest.Phone)</td>
+                            <td>@(string.IsNullOrWhiteSpace(guest.Subject) ? "(Không có)" : guest.Subject)</td>
+                            <td>@guest.SentAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="@guestStatusClass">@guestStatusText</span></td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2 justify-content-center action-buttons">
+                                    <button type="button" class="btn btn-sm btn-view" data-bs-toggle="collapse" data-bs-target="#@collapseId">
+                                        <i class="fa fa-eye me-1"></i> Nội dung
+                                    </button>
+                                    <form asp-action="MarkGuestContactProcessed" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@guest.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success" @(guest.IsProcessed ? "disabled" : string.Empty)>
+                                            <i class="fa fa-check me-1"></i> Đã xử lý
+                                        </button>
+                                    </form>
+                                    <form asp-action="DeleteGuestContact" method="post" onsubmit="return confirm('Xoá liên hệ này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@guest.Id" />
+                                        <button type="submit" class="btn btn-sm btn-delete">
+                                            <i class="fa fa-trash me-1"></i> Xoá
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="@collapseId">
+                            <td colspan="8">
+                                <div class="guest-message">
+                                    <div class="fw-semibold text-uppercase text-muted small mb-2">Nội dung</div>
+                                    <div>@guest.Message</div>
+                                </div>
+                            </td>
+                        </tr>
+                        guestIndex++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
 @if (Model.CurrentConversation != null)
 {
     <div class="conversation-panel mt-4">
@@ -237,7 +336,7 @@
                 <h5 class="mb-1">@Model.CurrentConversation.PartnerName</h5>
                 <small class="text-muted">@Model.CurrentConversation.PartnerRoleLabel</small>
             </div>
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Đóng hội thoại</a>
+            <a asp-action="Index" asp-route-noConversation="true" asp-route-customerId="@((int?)null)" class="btn btn-sm btn-outline-secondary">Đóng hội thoại</a>
         </div>
 
         <div class="message-stream">

@@ -47,6 +47,9 @@ namespace Web_ban_do_thu_cong_my_nghe.ViewModels
     public class AdminReportVM
     {
         public decimal TotalRevenue { get; set; }
+        public decimal TotalCapital { get; set; }
+        public decimal TotalProfit { get; set; }
+        public decimal ProfitMarginPercent { get; set; }
         public int TotalOrders { get; set; }
         public int TotalCustomers { get; set; }
         public List<TopProductVM> TopProducts { get; set; } = new();

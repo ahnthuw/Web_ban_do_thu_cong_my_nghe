@@ -240,6 +240,26 @@
         </div>
         <div class="col-xl-3 col-sm-6">
             <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-sack-dollar"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Tổng vốn (cost)</p>
+                    <p class="metric-value mb-0">@Model.TotalCapital.ToString("N0") ₫</p>
+                    <small class="metric-subtext">Dựa trên giá nhập</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
+                <span class="metric-icon"><i class="fa fa-chart-line"></i></span>
+                <div>
+                    <p class="metric-label mb-1">Lợi nhuận</p>
+                    <p class="metric-value mb-0">@Model.TotalProfit.ToString("N0") ₫</p>
+                    <small class="metric-subtext">Biên lợi nhuận: @Model.ProfitMarginPercent.ToString("N2")%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="report-metric-card d-flex align-items-start gap-3">
                 <span class="metric-icon"><i class="fa fa-receipt"></i></span>
                 <div>
                     <p class="metric-label mb-1">Tổng đơn hàng</p>

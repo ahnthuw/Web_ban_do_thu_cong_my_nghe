@@ -186,7 +186,7 @@
                     }
                 </div>
 
-                <form asp-action="LienHe" method="post" class="compose-form">
+                <form asp-action="LienHe" asp-controller="KhachHang" method="post" class="compose-form">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
                     <label asp-for="Composer.Message" class="form-label fw-semibold">Nội dung tin nhắn</label>

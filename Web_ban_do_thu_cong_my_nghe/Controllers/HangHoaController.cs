@@ -18,7 +18,7 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
         {
             db = context;
         }
-        public IActionResult Index(int? loai)
+        public IActionResult Index(int? loai, int page = 1, int pageSize = 12, int pages = 0)
         {
             var hangHoas = db.Products.Include(p => p.Category).AsQueryable();
 
@@ -28,7 +28,21 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
             }
             var discountMap = GetDiscountMap();
 
-            var result = hangHoas
+            var totalItems = hangHoas.Count();
+            if (pages > 0)
+            {
+                // Tự động chia thành số trang mong muốn
+                pageSize = (int)System.Math.Ceiling(totalItems / (double)pages);
+                if (pageSize <= 0) pageSize = 1;
+            }
+            var totalPages = (int)System.Math.Ceiling(totalItems / (double)pageSize);
+            if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
+
+            var pageItems = hangHoas
+                .OrderByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .AsEnumerable()
                 .Select(p =>
                 {
@@ -45,8 +59,17 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                     };
                 })
                 .ToList();
+            var vm = new HangHoaIndexVM
+            {
+                Items = pageItems,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CategoryId = loai
+            };
 
-            return View(result);
+            return View(vm);
         }
 
         public IActionResult Search(string query, int? categoryId)
@@ -81,7 +104,16 @@ namespace Web_ban_do_thu_cong_my_nghe.Controllers
                 .ToList();
             ViewBag.Query = query;
             ViewBag.CategoryId = categoryId;
-            return View("Index", result);
+            var vm = new HangHoaIndexVM
+            {
+                Items = result,
+                Page = 1,
+                PageSize = result.Count,
+                TotalItems = result.Count,
+                TotalPages = 1,
+                CategoryId = categoryId
+            };
+            return View("Index", vm);
         }
 
         public IActionResult BestSeller()
